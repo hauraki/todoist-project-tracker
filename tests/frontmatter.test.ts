@@ -4,6 +4,8 @@ import {
 	applyTptFrontmatter,
 	buildDeletedFrontmatter,
 	buildProjectFrontmatter,
+	collectLabels,
+	parseTagFilter,
 } from '../src/core/frontmatter';
 import type { RemoteProject, TodoistProject } from '../src/todoist/types';
 
@@ -84,4 +86,46 @@ test('applyTptFrontmatter removes old tpt_ keys and keeps user keys first', () =
 	applyTptFrontmatter(fm, buildDeletedFrontmatter('Old'));
 	assert.deepEqual(Object.keys(fm), ['mine', 'other', 'tpt_project_name', 'tpt_project_status']);
 	assert.equal(fm['mine'], 'keep');
+});
+
+test('parseTagFilter splits, trims, drops empties and duplicates, keeps order', () => {
+	assert.deepEqual(parseTagFilter(''), []);
+	assert.deepEqual(parseTagFilter(' Today, Week ,,Month, Today '), ['Today', 'Week', 'Month']);
+});
+
+test('collectLabels returns all labels sorted without a filter', () => {
+	const tasks = [
+		{ id: 't1', project_id: 'p1', labels: ['Week', 'Today'], due: null, deadline: null },
+		{ id: 't2', project_id: 'p1', labels: ['Other'], due: null, deadline: null },
+	];
+	assert.deepEqual(collectLabels(tasks), ['Other', 'Today', 'Week']);
+});
+
+test('collectLabels keeps only filtered labels in filter order', () => {
+	const tasks = [
+		{ id: 't1', project_id: 'p1', labels: ['Week', 'Today'], due: null, deadline: null },
+		{ id: 't2', project_id: 'p1', labels: ['Other'], due: null, deadline: null },
+	];
+	assert.deepEqual(collectLabels(tasks, ['Today', 'Week', 'Month']), ['Today', 'Week']);
+	assert.deepEqual(collectLabels(tasks, ['Month']), []);
+});
+
+test('collectLabels matches filter labels case-insensitively and keeps the filter spelling', () => {
+	const tasks = [
+		{ id: 't1', project_id: 'p1', labels: ['today', 'WEEK'], due: null, deadline: null },
+	];
+	assert.deepEqual(collectLabels(tasks, ['Today', 'Week', 'Month']), ['Today', 'Week']);
+});
+
+test('buildProjectFrontmatter applies the tag filter to tpt_tasks_labels', () => {
+	const fm = buildProjectFrontmatter(
+		{
+			project: project(),
+			rank: 1,
+			parentName: null,
+			tasks: [{ id: 't1', project_id: 'p1', labels: ['Week', 'Today', 'x'], due: null, deadline: null }],
+		},
+		['Today', 'Week'],
+	);
+	assert.deepEqual(fm['tpt_tasks_labels'], ['Today', 'Week']);
 });

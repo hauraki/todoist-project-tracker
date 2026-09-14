@@ -14,8 +14,28 @@ export function projectLink(projectId: string): string {
 	return `todoist://project?id=${projectId}`;
 }
 
-/** Builds the `tpt_` properties for an active or archived remote project, keys sorted alphabetically. */
-export function buildProjectFrontmatter(remote: RemoteProject): TptFrontmatter {
+/** Parses the comma-separated `tag_filter` setting into an ordered, de-duplicated list of labels. */
+export function parseTagFilter(value: string): string[] {
+	return [...new Set(value.split(',').map((s) => s.trim()).filter((s) => s.length > 0))];
+}
+
+/**
+ * Collects the labels of the given tasks. Without a filter all labels are returned sorted
+ * alphabetically; with a filter only the listed labels are returned, in the filter's order
+ * and spelling. Filter matching is case-insensitive.
+ */
+export function collectLabels(tasks: RemoteProject['tasks'], tagFilter: string[] = []): string[] {
+	const present = new Set(tasks.flatMap((t) => t.labels));
+	if (tagFilter.length === 0) return [...present].sort();
+	const presentLower = new Set([...present].map((l) => l.toLowerCase()));
+	return tagFilter.filter((label) => presentLower.has(label.toLowerCase()));
+}
+
+/**
+ * Builds the `tpt_` properties for an active or archived remote project, keys sorted alphabetically.
+ * `tagFilter` restricts and orders `tpt_tasks_labels`; empty means all labels.
+ */
+export function buildProjectFrontmatter(remote: RemoteProject, tagFilter: string[] = []): TptFrontmatter {
 	const { project, tasks } = remote;
 	const props: TptFrontmatter = {
 		tpt_parent_project_name: project.is_archived ? null : remote.parentName,
@@ -34,7 +54,7 @@ export function buildProjectFrontmatter(remote: RemoteProject): TptFrontmatter {
 		const deadline = dateRange(
 			tasks.flatMap((t) => (t.deadline ? [toDateOnly(t.deadline.date)] : [])),
 		);
-		const labels = [...new Set(tasks.flatMap((t) => t.labels))].sort();
+		const labels = collectLabels(tasks, tagFilter);
 		Object.assign(props, {
 			tpt_project_is_favorite: project.is_favorite,
 			tpt_project_rank: remote.rank,

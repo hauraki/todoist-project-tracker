@@ -3,6 +3,7 @@ import {
 	applyTptFrontmatter,
 	buildDeletedFrontmatter,
 	buildProjectFrontmatter,
+	parseTagFilter,
 	isTptKey,
 } from './core/frontmatter';
 import { buildRemoteProjects } from './core/remote';
@@ -28,6 +29,7 @@ export async function importProjects(
 		throw new Error('No Todoist API token configured. Add it in the plugin settings.');
 	}
 	const client = new TodoistClient(token);
+	const tagFilter = parseTagFilter(settings.tag_filter ?? '');
 
 	// One paginated request for all tasks instead of one request per project.
 	const [active, archived, tasks] = await Promise.all([
@@ -47,11 +49,11 @@ export async function importProjects(
 		// (for example a plain note with that name). Update it instead of failing.
 		const file =
 			app.vault.getFileByPath(path) ?? (await app.vault.create(path, ''));
-		await writeFrontmatter(app, file, buildProjectFrontmatter(remote));
+		await writeFrontmatter(app, file, buildProjectFrontmatter(remote, tagFilter));
 	}
 	for (const { baseName, remote } of plan.update) {
 		const file = getProjectFile(app, folder, baseName);
-		await writeFrontmatter(app, file, buildProjectFrontmatter(remote));
+		await writeFrontmatter(app, file, buildProjectFrontmatter(remote, tagFilter));
 	}
 	for (const local of plan.markDeleted) {
 		const file = getProjectFile(app, folder, local.baseName);
