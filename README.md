@@ -1,92 +1,55 @@
-# Obsidian Sample Plugin
+# Todoist Project Tracker
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+An Obsidian plugin that imports your Todoist projects into your vault so you can track them alongside your notes.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+The plugin is **read-only** towards Todoist: it only ever reads data via the Todoist API and never writes anything back.
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
+## Settings
 
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and outputs a Notice on click.
-- Registers a global interval which logs 'setInterval' to the console.
+- **Todoist API token** (required): your personal API token, found in Todoist under **Settings → Integrations → Developer**.
+- **Projects folder** (optional): the vault folder that holds the project files. Defaults to `TPT`.
 
-## First time developing plugins?
+## Commands
 
-Quick starting guide for new plugin devs:
+- **Import projects**: fetches all active and archived projects (and the active tasks of active projects) from Todoist and reconciles them with the files in the projects folder. A notice shows how many files were created, updated and marked as deleted.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `src/main.ts` to `main.js`.
-- Make changes to `src/main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+## How it works
 
-## Releasing new releases
+Each Todoist project maps to one markdown file in the projects folder (flat, no nesting). The file name is the project name with characters that are not allowed in Obsidian file names (`* " \ / < > : | ? # ^ [ ]`) replaced by a space. A file counts as a project file as soon as its frontmatter has at least one `tpt_` property.
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+All properties written by the plugin are prefixed with `tpt_`. You can add your own properties to a project file; the plugin never touches them.
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+| Property | Active | Archived | Deleted |
+| --- | --- | --- | --- |
+| `tpt_parent_project_name` | parent name or empty | empty | |
+| `tpt_project_color` | ✓ | ✓ | |
+| `tpt_project_description` | if set | if set | |
+| `tpt_project_is_favorite` | ✓ | | |
+| `tpt_project_link` | `todoist://project?id=…` | ✓ | |
+| `tpt_project_name` | original name | ✓ | ✓ |
+| `tpt_project_rank` | position in Todoist's project tree (1-based) | | |
+| `tpt_project_status` | `active` | `archived` | `deleted` |
+| `tpt_tasks_count` | ✓ | | |
+| `tpt_tasks_labels` | set of all task labels | | |
+| `tpt_tasks_first_due_on` / `tpt_tasks_last_due_on` | earliest / latest due date | | |
+| `tpt_tasks_first_deadline_on` / `tpt_tasks_last_deadline_on` | earliest / latest deadline | | |
 
-## Adding your plugin to the community plugin list
+On import:
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+- A remote project without a local file is created (case A).
+- A remote project with a local file gets all its `tpt_` properties replaced (case B). User properties stay in place, `tpt_` properties are appended after them.
+- A local project file without a remote project keeps only `tpt_project_name` and gets `tpt_project_status: deleted` (case C).
 
-## How to use
+Two projects whose names normalize to the same file name cannot both be tracked; the second one is skipped and a warning is logged to the developer console.
 
-- Clone this repo.
-- Make sure your NodeJS is at least v18 (`node --version`).
-- `npm i` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+## Development
 
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint
-
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code.
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-	"fundingUrl": "https://buymeacoffee.com"
-}
+```bash
+npm install
+npm run dev     # watch build
+npm run build   # type check + production build
+npm run test    # unit tests (node:test via tsx)
+npm run lint
 ```
 
-If you have multiple URLs, you can also do:
-
-```json
-{
-	"fundingUrl": {
-		"Buy Me a Coffee": "https://buymeacoffee.com",
-		"GitHub Sponsor": "https://github.com/sponsors",
-		"Patreon": "https://www.patreon.com/"
-	}
-}
-```
-
-## API Documentation
-
-See https://docs.obsidian.md
+The plugin folder must live in `<Vault>/.obsidian/plugins/todoist-project-tracker/`. Reload Obsidian after building and enable the plugin under **Settings → Community plugins**.

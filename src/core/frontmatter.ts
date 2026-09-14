@@ -1,0 +1,80 @@
+import type { RemoteProject } from '../todoist/types';
+import { dateRange, toDateOnly } from './dates';
+
+export const TPT_PREFIX = 'tpt_';
+
+export type FrontmatterValue = string | number | boolean | string[] | null;
+export type TptFrontmatter = Record<string, FrontmatterValue>;
+
+export function isTptKey(key: string): boolean {
+	return key.startsWith(TPT_PREFIX);
+}
+
+export function projectLink(projectId: string): string {
+	return `todoist://project?id=${projectId}`;
+}
+
+/** Builds the `tpt_` properties for an active or archived remote project, keys sorted alphabetically. */
+export function buildProjectFrontmatter(remote: RemoteProject): TptFrontmatter {
+	const { project, tasks } = remote;
+	const props: TptFrontmatter = {
+		tpt_parent_project_name: project.is_archived ? null : remote.parentName,
+		tpt_project_color: project.color,
+		tpt_project_link: projectLink(project.id),
+		tpt_project_name: project.name,
+		tpt_project_status: project.is_archived ? 'archived' : 'active',
+	};
+	if (project.description) {
+		props.tpt_project_description = project.description;
+	}
+	if (!project.is_archived) {
+		const due = dateRange(
+			tasks.flatMap((t) => (t.due ? [toDateOnly(t.due.date)] : [])),
+		);
+		const deadline = dateRange(
+			tasks.flatMap((t) => (t.deadline ? [toDateOnly(t.deadline.date)] : [])),
+		);
+		const labels = [...new Set(tasks.flatMap((t) => t.labels))].sort();
+		Object.assign(props, {
+			tpt_project_is_favorite: project.is_favorite,
+			tpt_project_rank: remote.rank,
+			tpt_tasks_count: tasks.length,
+			tpt_tasks_first_deadline_on: deadline.first,
+			tpt_tasks_first_due_on: due.first,
+			tpt_tasks_labels: labels,
+			tpt_tasks_last_deadline_on: deadline.last,
+			tpt_tasks_last_due_on: due.last,
+		});
+	}
+	return sortKeys(props);
+}
+
+/** Builds the `tpt_` properties for a project that no longer exists in Todoist. */
+export function buildDeletedFrontmatter(projectName: string): TptFrontmatter {
+	return sortKeys({
+		tpt_project_name: projectName,
+		tpt_project_status: 'deleted',
+	});
+}
+
+/**
+ * Applies `tpt_` properties to a frontmatter object in place: all existing `tpt_` keys are
+ * removed and the new ones are appended after any user-defined properties.
+ */
+export function applyTptFrontmatter(
+	frontmatter: Record<string, unknown>,
+	props: TptFrontmatter,
+): void {
+	for (const key of Object.keys(frontmatter)) {
+		if (isTptKey(key)) delete frontmatter[key];
+	}
+	for (const [key, value] of Object.entries(props)) {
+		frontmatter[key] = value;
+	}
+}
+
+function sortKeys(props: TptFrontmatter): TptFrontmatter {
+	return Object.fromEntries(
+		Object.entries(props).sort(([a], [b]) => a.localeCompare(b)),
+	);
+}

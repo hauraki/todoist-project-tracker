@@ -2,7 +2,7 @@
 	"id": "todoist-project-tracker",
 	"name": "Todoist Project Tracker",
 	"version": "0.1.0",
-	"minAppVersion": "1.0.0",
+	"minAppVersion": "1.5.7",
 	"description": "Imports your Todoist projects into Obsidian to track their status.",
 	"author": "Obsidian",
 	"authorUrl": "https://obsidian.md",

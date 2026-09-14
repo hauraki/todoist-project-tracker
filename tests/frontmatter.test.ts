@@ -1,0 +1,87 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+	applyTptFrontmatter,
+	buildDeletedFrontmatter,
+	buildProjectFrontmatter,
+} from '../src/core/frontmatter';
+import type { RemoteProject, TodoistProject } from '../src/todoist/types';
+
+function project(overrides: Partial<TodoistProject> = {}): TodoistProject {
+	return {
+		id: 'p1',
+		name: 'foo/bar',
+		color: 'sky_blue',
+		parent_id: null,
+		is_archived: false,
+		is_favorite: true,
+		description: '',
+		...overrides,
+	};
+}
+
+test('active project gets all properties, sorted alphabetically', () => {
+	const remote: RemoteProject = {
+		project: project({ description: 'Hello' }),
+		rank: 3,
+		parentName: 'Work',
+		tasks: [
+			{ id: 't1', project_id: 'p1', labels: ['b', 'a'], due: { date: '2026-02-01' }, deadline: null },
+			{ id: 't2', project_id: 'p1', labels: ['a'], due: { date: '2026-01-05T10:00:00' }, deadline: { date: '2026-03-01' } },
+			{ id: 't3', project_id: 'p1', labels: [], due: null, deadline: { date: '2026-02-15' } },
+		],
+	};
+	const fm = buildProjectFrontmatter(remote);
+	assert.deepEqual(Object.keys(fm), [...Object.keys(fm)].sort());
+	assert.deepEqual(fm, {
+		tpt_parent_project_name: 'Work',
+		tpt_project_color: 'sky_blue',
+		tpt_project_description: 'Hello',
+		tpt_project_is_favorite: true,
+		tpt_project_link: 'todoist://project?id=p1',
+		tpt_project_name: 'foo/bar',
+		tpt_project_rank: 3,
+		tpt_project_status: 'active',
+		tpt_tasks_count: 3,
+		tpt_tasks_first_deadline_on: '2026-02-15',
+		tpt_tasks_first_due_on: '2026-01-05',
+		tpt_tasks_labels: ['a', 'b'],
+		tpt_tasks_last_deadline_on: '2026-03-01',
+		tpt_tasks_last_due_on: '2026-02-01',
+	});
+});
+
+test('archived project gets the reduced property set', () => {
+	const fm = buildProjectFrontmatter({
+		project: project({ is_archived: true }),
+		rank: null,
+		parentName: null,
+		tasks: [],
+	});
+	assert.deepEqual(fm, {
+		tpt_parent_project_name: null,
+		tpt_project_color: 'sky_blue',
+		tpt_project_link: 'todoist://project?id=p1',
+		tpt_project_name: 'foo/bar',
+		tpt_project_status: 'archived',
+	});
+});
+
+test('deleted frontmatter keeps only name and status', () => {
+	assert.deepEqual(buildDeletedFrontmatter('Old'), {
+		tpt_project_name: 'Old',
+		tpt_project_status: 'deleted',
+	});
+});
+
+test('applyTptFrontmatter removes old tpt_ keys and keeps user keys first', () => {
+	const fm: Record<string, unknown> = {
+		tpt_project_rank: 9,
+		mine: 'keep',
+		tpt_tasks_count: 5,
+		other: 1,
+	};
+	applyTptFrontmatter(fm, buildDeletedFrontmatter('Old'));
+	assert.deepEqual(Object.keys(fm), ['mine', 'other', 'tpt_project_name', 'tpt_project_status']);
+	assert.equal(fm['mine'], 'keep');
+});
