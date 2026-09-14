@@ -5,7 +5,7 @@ import {
 	buildDeletedFrontmatter,
 	buildProjectFrontmatter,
 	collectLabels,
-	parseTagFilter,
+	parseLabelFilter,
 } from '../src/core/frontmatter';
 import type { RemoteProject, TodoistProject } from '../src/todoist/types';
 
@@ -88,9 +88,9 @@ test('applyTptFrontmatter removes old tpt_ keys and keeps user keys first', () =
 	assert.equal(fm['mine'], 'keep');
 });
 
-test('parseTagFilter splits, trims, drops empties and duplicates, keeps order', () => {
-	assert.deepEqual(parseTagFilter(''), []);
-	assert.deepEqual(parseTagFilter(' Today, Week ,,Month, Today '), ['Today', 'Week', 'Month']);
+test('parseLabelFilter splits, trims, drops empties and duplicates, keeps order', () => {
+	assert.deepEqual(parseLabelFilter(''), []);
+	assert.deepEqual(parseLabelFilter(' Today, Week ,,Month, Today '), ['Today', 'Week', 'Month']);
 });
 
 test('collectLabels returns all labels sorted without a filter', () => {
@@ -117,7 +117,7 @@ test('collectLabels matches filter labels case-insensitively and keeps the filte
 	assert.deepEqual(collectLabels(tasks, ['Today', 'Week', 'Month']), ['Today', 'Week']);
 });
 
-test('buildProjectFrontmatter applies the tag filter to tpt_tasks_labels', () => {
+test('buildProjectFrontmatter applies the label filter to tpt_tasks_labels', () => {
 	const fm = buildProjectFrontmatter(
 		{
 			project: project(),

@@ -4,19 +4,19 @@ import type TodoistProjectTrackerPlugin from './main';
 export interface TptSettings {
 	todoist_api_token: string;
 	projects_folder: string;
-	tag_filter: string;
+	label_filter: string;
 }
 
 export const DEFAULT_SETTINGS: TptSettings = {
 	todoist_api_token: '',
 	projects_folder: 'TPT',
-	tag_filter: '',
+	label_filter: '',
 };
 
 const TOKEN_DESC =
 	'Required. Find it in todoist under settings → integrations → developer. The plugin only reads from todoist and never writes to it.';
 const FOLDER_DESC = 'Vault folder that holds the project files. Created on first import if missing.';
-const TAG_FILTER_DESC =
+const LABEL_FILTER_DESC =
 	'Optional. Comma-separated list of labels, e.g. "Today, Week, Month". Only these labels are written to tpt_tasks_labels, in this order (matched case-insensitively). Leave empty to import all labels.';
 
 export class TptSettingTab extends PluginSettingTab {
@@ -50,11 +50,11 @@ export class TptSettingTab extends PluginSettingTab {
 				},
 			},
 			{
-				name: 'Tag filter',
-				desc: TAG_FILTER_DESC,
+				name: 'Label filter',
+				desc: LABEL_FILTER_DESC,
 				control: {
 					type: 'text',
-					key: 'tag_filter',
+					key: 'label_filter',
 					placeholder: 'Comma-separated labels',
 				},
 			},
@@ -71,8 +71,8 @@ export class TptSettingTab extends PluginSettingTab {
 			this.plugin.settings.projects_folder = (trimmed as string) || DEFAULT_SETTINGS.projects_folder;
 		} else if (key === 'todoist_api_token') {
 			this.plugin.settings.todoist_api_token = trimmed as string;
-		} else if (key === 'tag_filter') {
-			this.plugin.settings.tag_filter = trimmed as string;
+		} else if (key === 'label_filter') {
+			this.plugin.settings.label_filter = trimmed as string;
 		}
 		await this.plugin.saveSettings();
 	}
@@ -111,14 +111,14 @@ export class TptSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Tag filter')
-			.setDesc(TAG_FILTER_DESC)
+			.setName('Label filter')
+			.setDesc(LABEL_FILTER_DESC)
 			.addText((text) =>
 				text
 					.setPlaceholder('Comma-separated labels')
-					.setValue(this.plugin.settings.tag_filter)
+					.setValue(this.plugin.settings.label_filter)
 					.onChange(async (value) => {
-						this.plugin.settings.tag_filter = value.trim();
+						this.plugin.settings.label_filter = value.trim();
 						await this.plugin.saveSettings();
 					}),
 			);

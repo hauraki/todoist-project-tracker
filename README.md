@@ -30,7 +30,7 @@ All properties written by the plugin are prefixed with `tpt_`. You can add your 
 | `tpt_project_rank` | position in Todoist's project tree (1-based) | | |
 | `tpt_project_status` | `active` | `archived` | `deleted` |
 | `tpt_tasks_count` | ✓ | | |
-| `tpt_tasks_labels` | set of all task labels, or only the labels listed in the **Tag filter** setting (in that order) | | |
+| `tpt_tasks_labels` | set of all task labels, or only the labels listed in the **Label filter** setting (in that order) | | |
 | `tpt_tasks_first_due_on` / `tpt_tasks_last_due_on` | earliest / latest due date | | |
 | `tpt_tasks_first_deadline_on` / `tpt_tasks_last_deadline_on` | earliest / latest deadline | | |
 
