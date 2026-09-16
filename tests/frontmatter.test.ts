@@ -6,6 +6,7 @@ import {
 	buildProjectFrontmatter,
 	collectLabels,
 	parseLabelFilter,
+	projectIdFromLink,
 } from '../src/core/frontmatter';
 import type { RemoteProject, TodoistProject } from '../src/todoist/types';
 
@@ -39,6 +40,7 @@ test('active project gets all properties, sorted alphabetically', () => {
 		tpt_parent_project_name: 'Work',
 		tpt_project_color: 'sky_blue',
 		tpt_project_description: 'Hello',
+		tpt_project_id: 'p1',
 		tpt_project_is_favorite: true,
 		tpt_project_link: 'todoist://project?id=p1',
 		tpt_project_name: 'foo/bar',
@@ -63,17 +65,29 @@ test('archived project gets the reduced property set', () => {
 	assert.deepEqual(fm, {
 		tpt_parent_project_name: null,
 		tpt_project_color: 'sky_blue',
+		tpt_project_id: 'p1',
 		tpt_project_link: 'todoist://project?id=p1',
 		tpt_project_name: 'foo/bar',
 		tpt_project_status: 'archived',
 	});
 });
 
-test('deleted frontmatter keeps only name and status', () => {
+test('deleted frontmatter keeps only id, name and status', () => {
 	assert.deepEqual(buildDeletedFrontmatter('Old'), {
 		tpt_project_name: 'Old',
 		tpt_project_status: 'deleted',
 	});
+	assert.deepEqual(buildDeletedFrontmatter('Old', 'p1'), {
+		tpt_project_id: 'p1',
+		tpt_project_name: 'Old',
+		tpt_project_status: 'deleted',
+	});
+});
+
+test('projectIdFromLink extracts the id from a todoist project link', () => {
+	assert.equal(projectIdFromLink('todoist://project?id=6Xg7hQ2'), '6Xg7hQ2');
+	assert.equal(projectIdFromLink('https://todoist.com'), null);
+	assert.equal(projectIdFromLink(undefined), null);
 });
 
 test('applyTptFrontmatter removes old tpt_ keys and keeps user keys first', () => {

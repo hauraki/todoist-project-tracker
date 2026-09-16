@@ -11,7 +11,7 @@ The plugin is **read-only** towards Todoist: it only ever reads data via the Tod
 
 ## Commands
 
-- **Import projects**: fetches all active and archived projects (and the active tasks of active projects) from Todoist and reconciles them with the files in the projects folder. A notice shows how many files were created, updated and marked as deleted.
+- **Import projects**: fetches all active and archived projects (and the active tasks of active projects) from Todoist and reconciles them with the files in the projects folder. A notice shows how many files were created, updated, renamed and marked as deleted.
 
 ## How it works
 
@@ -24,6 +24,7 @@ All properties written by the plugin are prefixed with `tpt_`. You can add your 
 | `tpt_parent_project_name` | parent name or empty | empty | |
 | `tpt_project_color` | ✓ | ✓ | |
 | `tpt_project_description` | if set | if set | |
+| `tpt_project_id` | Todoist project id | ✓ | ✓ |
 | `tpt_project_is_favorite` | ✓ | | |
 | `tpt_project_link` | `todoist://project?id=…` | ✓ | |
 | `tpt_project_name` | original name | ✓ | ✓ |
@@ -34,13 +35,15 @@ All properties written by the plugin are prefixed with `tpt_`. You can add your 
 | `tpt_tasks_first_due_on` / `tpt_tasks_last_due_on` | earliest / latest due date | | |
 | `tpt_tasks_first_deadline_on` / `tpt_tasks_last_deadline_on` | earliest / latest deadline | | |
 
+Remote projects are matched to local files by `tpt_project_id`. Files that do not have this property yet (written by an older version, or created by hand) are matched by file name instead and receive the id on the next import.
+
 On import:
 
 - A remote project without a local file is created (case A).
-- A remote project with a local file gets all its `tpt_` properties replaced (case B). User properties stay in place, `tpt_` properties are appended after them.
-- A local project file without a remote project keeps only `tpt_project_name` and gets `tpt_project_status: deleted` (case C).
+- A remote project with a local file gets all its `tpt_` properties replaced (case B). User properties stay in place, `tpt_` properties are appended after them. If the project was renamed in Todoist, the file is renamed to follow it; links to the file in your vault are updated by Obsidian.
+- A local project file without a remote project keeps only `tpt_project_id` and `tpt_project_name` and gets `tpt_project_status: deleted` (case C). If a project with the same name is created in Todoist later, it takes over this file.
 
-Two projects whose names normalize to the same file name cannot both be tracked; the second one is skipped and a warning is logged to the developer console.
+Two projects whose names normalize to the same file name cannot both be tracked; the second one is skipped and a warning is logged to the developer console. Likewise, a renamed project keeps its old file name if the new one is already taken.
 
 ## Development
 

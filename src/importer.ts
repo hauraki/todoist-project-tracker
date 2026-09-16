@@ -5,6 +5,7 @@ import {
 	buildProjectFrontmatter,
 	parseLabelFilter,
 	isTptKey,
+	projectIdFromLink,
 } from './core/frontmatter';
 import { buildRemoteProjects } from './core/remote';
 import { planReconciliation, type LocalProject } from './core/reconcile';
@@ -15,6 +16,7 @@ import type { TptSettings } from './settings';
 export interface ImportResult {
 	created: number;
 	updated: number;
+	renamed: number;
 	deleted: number;
 	skipped: number;
 }
@@ -51,8 +53,20 @@ export async function importProjects(
 			app.vault.getFileByPath(path) ?? (await app.vault.create(path, ''));
 		await writeFrontmatter(app, file, buildProjectFrontmatter(remote, labelFilter));
 	}
-	for (const { baseName, remote } of plan.update) {
-		const file = getProjectFile(app, folder, baseName);
+	let renamed = 0;
+	for (const { baseName, local, remote } of plan.update) {
+		let file = getProjectFile(app, folder, local.baseName);
+		if (baseName !== local.baseName) {
+			const renamedFile = await renameProjectFile(app, folder, file, baseName);
+			if (renamedFile) {
+				file = renamedFile;
+				renamed++;
+			} else {
+				console.warn(
+					`[TPT] Kept file name "${local.baseName}" for Todoist project "${remote.project.name}": "${baseName}.md" already exists.`,
+				);
+			}
+		}
 		await writeFrontmatter(app, file, buildProjectFrontmatter(remote, labelFilter));
 	}
 	for (const local of plan.markDeleted) {
@@ -60,7 +74,7 @@ export async function importProjects(
 		await writeFrontmatter(
 			app,
 			file,
-			buildDeletedFrontmatter(local.projectName ?? local.baseName),
+			buildDeletedFrontmatter(local.projectName ?? local.baseName, local.projectId),
 		);
 	}
 	for (const { baseName, remote } of plan.conflicts) {
@@ -68,10 +82,16 @@ export async function importProjects(
 			`[TPT] Skipped Todoist project "${remote.project.name}": file name "${baseName}" is empty or already used by another project.`,
 		);
 	}
+	for (const { wantedBaseName, local, remote } of plan.renameConflicts) {
+		console.warn(
+			`[TPT] Kept file name "${local.baseName}" for Todoist project "${remote.project.name}": file name "${wantedBaseName}" is empty or already used by another project.`,
+		);
+	}
 
 	return {
 		created: plan.create.length,
 		updated: plan.update.length,
+		renamed,
 		deleted: plan.markDeleted.length,
 		skipped: plan.conflicts.length,
 	};
@@ -84,6 +104,7 @@ export function showImportResult(result: ImportResult): void {
 		`Updated: ${result.updated}`,
 		`Marked deleted: ${result.deleted}`,
 	];
+	if (result.renamed > 0) lines.push(`Renamed: ${result.renamed}`);
 	if (result.skipped > 0) lines.push(`Skipped (name conflict): ${result.skipped}`);
 	new Notice(lines.join('\n'), 8000);
 }
@@ -116,8 +137,13 @@ function findLocalProjects(app: App, folder: TFolder): LocalProject[] {
 		const frontmatter = app.metadataCache.getFileCache(child)?.frontmatter;
 		if (!frontmatter || !Object.keys(frontmatter).some(isTptKey)) continue;
 		const name: unknown = frontmatter['tpt_project_name'];
+		const id: unknown = frontmatter['tpt_project_id'];
 		locals.push({
 			baseName: child.basename,
+			projectId:
+				typeof id === 'string' || typeof id === 'number'
+					? String(id)
+					: projectIdFromLink(frontmatter['tpt_project_link']),
 			projectName: typeof name === 'string' ? name : null,
 		});
 	}
@@ -128,6 +154,25 @@ function getProjectFile(app: App, folder: TFolder, baseName: string): TFile {
 	const file = app.vault.getFileByPath(`${folder.path}/${baseName}.md`);
 	if (!file) throw new Error(`Project file "${baseName}.md" disappeared during import.`);
 	return file;
+}
+
+/**
+ * Renames a project file to follow its Todoist project name. Returns `null` without renaming
+ * when the target path is already taken, for example by a plain note.
+ */
+async function renameProjectFile(
+	app: App,
+	folder: TFolder,
+	file: TFile,
+	newBaseName: string,
+): Promise<TFile | null> {
+	const newPath = `${folder.path}/${newBaseName}.md`;
+	if (app.vault.getAbstractFileByPath(newPath)) return null;
+	// fileManager.renameFile also updates links to the file across the vault.
+	await app.fileManager.renameFile(file, newPath);
+	const renamed = app.vault.getFileByPath(newPath);
+	if (!renamed) throw new Error(`Renamed project file "${newPath}" disappeared during import.`);
+	return renamed;
 }
 
 async function writeFrontmatter(

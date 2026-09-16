@@ -40,6 +40,7 @@ export function buildProjectFrontmatter(remote: RemoteProject, labelFilter: stri
 	const props: TptFrontmatter = {
 		tpt_parent_project_name: project.is_archived ? null : remote.parentName,
 		tpt_project_color: project.color,
+		tpt_project_id: project.id,
 		tpt_project_link: projectLink(project.id),
 		tpt_project_name: project.name,
 		tpt_project_status: project.is_archived ? 'archived' : 'active',
@@ -70,11 +71,23 @@ export function buildProjectFrontmatter(remote: RemoteProject, labelFilter: stri
 }
 
 /** Builds the `tpt_` properties for a project that no longer exists in Todoist. */
-export function buildDeletedFrontmatter(projectName: string): TptFrontmatter {
-	return sortKeys({
+export function buildDeletedFrontmatter(
+	projectName: string,
+	projectId: string | null = null,
+): TptFrontmatter {
+	const props: TptFrontmatter = {
 		tpt_project_name: projectName,
 		tpt_project_status: 'deleted',
-	});
+	};
+	if (projectId) props.tpt_project_id = projectId;
+	return sortKeys(props);
+}
+
+/** Extracts the project id from a `tpt_project_link` value, for files written before `tpt_project_id` existed. */
+export function projectIdFromLink(link: unknown): string | null {
+	if (typeof link !== 'string') return null;
+	const match = /^todoist:\/\/project\?id=([^&\s]+)$/.exec(link.trim());
+	return match?.[1] ?? null;
 }
 
 /**
