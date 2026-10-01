@@ -29,9 +29,9 @@ test('active project gets all properties, sorted alphabetically', () => {
 		rank: 3,
 		parentName: 'Work',
 		tasks: [
-			{ id: 't1', project_id: 'p1', labels: ['b', 'a'], due: { date: '2026-02-01' }, deadline: null },
-			{ id: 't2', project_id: 'p1', labels: ['a'], due: { date: '2026-01-05T10:00:00' }, deadline: { date: '2026-03-01' } },
-			{ id: 't3', project_id: 'p1', labels: [], due: null, deadline: { date: '2026-02-15' } },
+			{ id: 't1', project_id: 'p1', content: 't1', labels: ['b', 'a'], due: { date: '2026-02-01' }, deadline: null },
+			{ id: 't2', project_id: 'p1', content: 't2', labels: ['a'], due: { date: '2026-01-05T10:00:00' }, deadline: { date: '2026-03-01' } },
+			{ id: 't3', project_id: 'p1', content: 't3', labels: [], due: null, deadline: { date: '2026-02-15' } },
 		],
 	};
 	const fm = buildProjectFrontmatter(remote);
@@ -52,6 +52,7 @@ test('active project gets all properties, sorted alphabetically', () => {
 		tpt_tasks_labels: ['a', 'b'],
 		tpt_tasks_last_deadline_on: '2026-03-01',
 		tpt_tasks_last_due_on: '2026-02-01',
+		tpt_tasks_next_content: 't2',
 	});
 });
 
@@ -109,16 +110,16 @@ test('parseLabelFilter splits, trims, drops empties and duplicates, keeps order'
 
 test('collectLabels returns all labels sorted without a filter', () => {
 	const tasks = [
-		{ id: 't1', project_id: 'p1', labels: ['Week', 'Today'], due: null, deadline: null },
-		{ id: 't2', project_id: 'p1', labels: ['Other'], due: null, deadline: null },
+		{ id: 't1', project_id: 'p1', content: 't1', labels: ['Week', 'Today'], due: null, deadline: null },
+		{ id: 't2', project_id: 'p1', content: 't2', labels: ['Other'], due: null, deadline: null },
 	];
 	assert.deepEqual(collectLabels(tasks), ['Other', 'Today', 'Week']);
 });
 
 test('collectLabels keeps only filtered labels in filter order', () => {
 	const tasks = [
-		{ id: 't1', project_id: 'p1', labels: ['Week', 'Today'], due: null, deadline: null },
-		{ id: 't2', project_id: 'p1', labels: ['Other'], due: null, deadline: null },
+		{ id: 't1', project_id: 'p1', content: 't1', labels: ['Week', 'Today'], due: null, deadline: null },
+		{ id: 't2', project_id: 'p1', content: 't2', labels: ['Other'], due: null, deadline: null },
 	];
 	assert.deepEqual(collectLabels(tasks, ['Today', 'Week', 'Month']), ['Today', 'Week']);
 	assert.deepEqual(collectLabels(tasks, ['Month']), []);
@@ -126,7 +127,7 @@ test('collectLabels keeps only filtered labels in filter order', () => {
 
 test('collectLabels matches filter labels case-insensitively and keeps the filter spelling', () => {
 	const tasks = [
-		{ id: 't1', project_id: 'p1', labels: ['today', 'WEEK'], due: null, deadline: null },
+		{ id: 't1', project_id: 'p1', content: 't1', labels: ['today', 'WEEK'], due: null, deadline: null },
 	];
 	assert.deepEqual(collectLabels(tasks, ['Today', 'Week', 'Month']), ['Today', 'Week']);
 });
@@ -137,7 +138,7 @@ test('buildProjectFrontmatter applies the label filter to tpt_tasks_labels', () 
 			project: project(),
 			rank: 1,
 			parentName: null,
-			tasks: [{ id: 't1', project_id: 'p1', labels: ['Week', 'Today', 'x'], due: null, deadline: null }],
+			tasks: [{ id: 't1', project_id: 'p1', content: 't1', labels: ['Week', 'Today', 'x'], due: null, deadline: null }],
 		},
 		['Today', 'Week'],
 	);

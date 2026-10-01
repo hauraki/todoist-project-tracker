@@ -5,12 +5,14 @@ export interface TptSettings {
 	todoist_api_token: string;
 	projects_folder: string;
 	label_filter: string;
+	next_task_label: string;
 }
 
 export const DEFAULT_SETTINGS: TptSettings = {
 	todoist_api_token: '',
 	projects_folder: 'TPT',
 	label_filter: '',
+	next_task_label: '',
 };
 
 const TOKEN_DESC =
@@ -18,6 +20,8 @@ const TOKEN_DESC =
 const FOLDER_DESC = 'Vault folder that holds the project files. Created on first import if missing.';
 const LABEL_FILTER_DESC =
 	'Optional. Comma-separated list of labels, e.g. "Today, Week, Month". Only these labels are written to tpt_tasks_labels, in this order (matched case-insensitively). Leave empty to import all labels.';
+const NEXT_TASK_LABEL_DESC =
+	'Optional. The task with this label is written to tpt_tasks_next_content (matched case-insensitively). Use it on one task per project. Projects without a labelled task fall back to the task with the earliest due date or deadline.';
 
 export class TptSettingTab extends PluginSettingTab {
 	plugin: TodoistProjectTrackerPlugin;
@@ -58,6 +62,15 @@ export class TptSettingTab extends PluginSettingTab {
 					placeholder: 'Comma-separated labels',
 				},
 			},
+			{
+				name: 'Next task label',
+				desc: NEXT_TASK_LABEL_DESC,
+				control: {
+					type: 'text',
+					key: 'next_task_label',
+					placeholder: 'Label',
+				},
+			},
 		];
 	}
 
@@ -73,6 +86,8 @@ export class TptSettingTab extends PluginSettingTab {
 			this.plugin.settings.todoist_api_token = trimmed as string;
 		} else if (key === 'label_filter') {
 			this.plugin.settings.label_filter = trimmed as string;
+		} else if (key === 'next_task_label') {
+			this.plugin.settings.next_task_label = trimmed as string;
 		}
 		await this.plugin.saveSettings();
 	}
@@ -119,6 +134,19 @@ export class TptSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.label_filter)
 					.onChange(async (value) => {
 						this.plugin.settings.label_filter = value.trim();
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName('Next task label')
+			.setDesc(NEXT_TASK_LABEL_DESC)
+			.addText((text) =>
+				text
+					.setPlaceholder('Label')
+					.setValue(this.plugin.settings.next_task_label)
+					.onChange(async (value) => {
+						this.plugin.settings.next_task_label = value.trim();
 						await this.plugin.saveSettings();
 					}),
 			);

@@ -27,6 +27,8 @@ export interface TodoistDeadline {
 export interface TodoistTask {
 	id: string;
 	project_id: string;
+	/** Task text as entered in Todoist; may contain markdown. */
+	content: string;
 	labels: string[];
 	due: TodoistDue | null;
 	deadline: TodoistDeadline | null;

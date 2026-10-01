@@ -14,6 +14,22 @@ export function toDateOnly(value: string): string {
 	return value.slice(0, 10);
 }
 
+/**
+ * Turns a Todoist date value into a string that sorts chronologically in local time,
+ * including the time of day. UTC datetimes are converted to local time. Values without
+ * a time sort after all timed values of the same day.
+ */
+export function toSortKey(value: string): string {
+	if (value.endsWith('Z')) {
+		const d = new Date(value);
+		if (!Number.isNaN(d.getTime())) {
+			const pad = (n: number) => String(n).padStart(2, '0');
+			return `${toDateOnly(value)}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+		}
+	}
+	return value.length > 10 ? value.slice(0, 19) : `${value}T24:00:00`;
+}
+
 /** Returns the smallest and largest `YYYY-MM-DD` value, or nulls when the list is empty. */
 export function dateRange(dates: string[]): {
 	first: string | null;

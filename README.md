@@ -8,6 +8,8 @@ The plugin is **read-only** towards Todoist: it only ever reads data via the Tod
 
 - **Todoist API token** (required): your personal API token, found in Todoist under **Settings → Integrations → Developer**.
 - **Projects folder** (optional): the vault folder that holds the project files. Defaults to `TPT`.
+- **Label filter** (optional): comma-separated list of labels. Only these labels are written to `tpt_tasks_labels`, in this order. Leave empty to import all labels.
+- **Next task label** (optional): the label that marks a project's next task. Use it on one task per project; if several tasks carry it, any one of them is picked.
 
 ## Commands
 
@@ -34,6 +36,9 @@ All properties written by the plugin are prefixed with `tpt_`. You can add your 
 | `tpt_tasks_labels` | set of all task labels, or only the labels listed in the **Label filter** setting (in that order) | | |
 | `tpt_tasks_first_due_on` / `tpt_tasks_last_due_on` | earliest / latest due date | | |
 | `tpt_tasks_first_deadline_on` / `tpt_tasks_last_deadline_on` | earliest / latest deadline | | |
+| `tpt_tasks_next_content` | text of the next task, or empty | | |
+
+The next task is the task carrying the **Next task label**, if that setting is set and such a task exists. Otherwise it is the task with the earliest due date or deadline, time of day included; a date without a time counts as the end of that day. A project whose tasks have neither gets an empty value. The task text is stored as entered in Todoist, including any markdown.
 
 Remote projects are matched to local files by `tpt_project_id`. Files that do not have this property yet (written by an older version, or created by hand) are matched by file name instead and receive the id on the next import.
 

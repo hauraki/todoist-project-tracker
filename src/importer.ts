@@ -32,6 +32,7 @@ export async function importProjects(
 	}
 	const client = new TodoistClient(token);
 	const labelFilter = parseLabelFilter(settings.label_filter ?? '');
+	const nextTaskLabel = settings.next_task_label ?? '';
 
 	// One paginated request for all tasks instead of one request per project.
 	const [active, archived, tasks] = await Promise.all([
@@ -51,7 +52,7 @@ export async function importProjects(
 		// (for example a plain note with that name). Update it instead of failing.
 		const file =
 			app.vault.getFileByPath(path) ?? (await app.vault.create(path, ''));
-		await writeFrontmatter(app, file, buildProjectFrontmatter(remote, labelFilter));
+		await writeFrontmatter(app, file, buildProjectFrontmatter(remote, labelFilter, nextTaskLabel));
 	}
 	let renamed = 0;
 	for (const { baseName, local, remote } of plan.update) {
@@ -67,7 +68,7 @@ export async function importProjects(
 				);
 			}
 		}
-		await writeFrontmatter(app, file, buildProjectFrontmatter(remote, labelFilter));
+		await writeFrontmatter(app, file, buildProjectFrontmatter(remote, labelFilter, nextTaskLabel));
 	}
 	for (const local of plan.markDeleted) {
 		const file = getProjectFile(app, folder, local.baseName);

@@ -1,5 +1,6 @@
 import type { RemoteProject } from '../todoist/types';
 import { dateRange, toDateOnly } from './dates';
+import { pickNextTask } from './next-task';
 
 export const TPT_PREFIX = 'tpt_';
 
@@ -34,8 +35,13 @@ export function collectLabels(tasks: RemoteProject['tasks'], labelFilter: string
 /**
  * Builds the `tpt_` properties for an active or archived remote project, keys sorted alphabetically.
  * `labelFilter` restricts and orders `tpt_tasks_labels`; empty means all labels.
+ * `nextTaskLabel` marks the task written to `tpt_tasks_next_content`; empty means pick by date only.
  */
-export function buildProjectFrontmatter(remote: RemoteProject, labelFilter: string[] = []): TptFrontmatter {
+export function buildProjectFrontmatter(
+	remote: RemoteProject,
+	labelFilter: string[] = [],
+	nextTaskLabel = '',
+): TptFrontmatter {
 	const { project, tasks } = remote;
 	const props: TptFrontmatter = {
 		tpt_parent_project_name: project.is_archived ? null : remote.parentName,
@@ -65,6 +71,7 @@ export function buildProjectFrontmatter(remote: RemoteProject, labelFilter: stri
 			tpt_tasks_labels: labels,
 			tpt_tasks_last_deadline_on: deadline.last,
 			tpt_tasks_last_due_on: due.last,
+			tpt_tasks_next_content: pickNextTask(tasks, nextTaskLabel)?.content ?? null,
 		});
 	}
 	return sortKeys(props);

@@ -116,7 +116,7 @@ test('buildRemoteProjects drops inbox, ranks active projects and resolves parent
 	const remotes = buildRemoteProjects(
 		[inbox, work, child],
 		[archived],
-		new Map([[child.id, [{ id: 't', project_id: child.id, labels: [], due: null, deadline: null }]]]),
+		new Map([[child.id, [{ id: 't', project_id: child.id, content: 't', labels: [], due: null, deadline: null }]]]),
 	);
 	assert.deepEqual(
 		remotes.map((r) => [r.project.name, r.rank, r.parentName, r.tasks.length]),
