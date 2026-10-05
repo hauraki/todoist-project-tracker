@@ -7,6 +7,7 @@ import {
 	collectLabels,
 	parseLabelFilter,
 	projectIdFromLink,
+	tptFrontmatterMatches,
 } from '../src/core/frontmatter';
 import type { RemoteProject, TodoistProject } from '../src/todoist/types';
 
@@ -143,4 +144,27 @@ test('buildProjectFrontmatter applies the label filter to tpt_tasks_labels', () 
 		['Today', 'Week'],
 	);
 	assert.deepEqual(fm['tpt_tasks_labels'], ['Today', 'Week']);
+});
+
+test('tptFrontmatterMatches ignores key order and user properties', () => {
+	const props = { tpt_a: 1, tpt_b: ['x', 'y'], tpt_c: null };
+	assert.equal(tptFrontmatterMatches({ title: 'mine', tpt_c: null, tpt_b: ['x', 'y'], tpt_a: 1 }, props), true);
+});
+
+test('tptFrontmatterMatches detects changed, missing and extra tpt keys', () => {
+	const props = { tpt_a: 1, tpt_b: ['x', 'y'], tpt_c: null };
+	assert.equal(tptFrontmatterMatches({ tpt_a: 2, tpt_b: ['x', 'y'], tpt_c: null }, props), false);
+	assert.equal(tptFrontmatterMatches({ tpt_a: 1, tpt_b: ['y', 'x'], tpt_c: null }, props), false);
+	assert.equal(tptFrontmatterMatches({ tpt_a: 1, tpt_b: ['x'], tpt_c: null }, props), false);
+	assert.equal(tptFrontmatterMatches({ tpt_a: 1, tpt_b: ['x', 'y'] }, props), false);
+	assert.equal(tptFrontmatterMatches({ tpt_a: 1, tpt_b: ['x', 'y'], tpt_c: null, tpt_d: 'old' }, props), false);
+	assert.equal(tptFrontmatterMatches({ tpt_a: '1', tpt_b: ['x', 'y'], tpt_c: null }, props), false);
+});
+
+test('tptFrontmatterMatches accepts freshly applied properties', () => {
+	const fm: Record<string, unknown> = { title: 'mine', tpt_old: 'gone' };
+	const props = buildDeletedFrontmatter('Foo', 'p1');
+	assert.equal(tptFrontmatterMatches(fm, props), false);
+	applyTptFrontmatter(fm, props);
+	assert.equal(tptFrontmatterMatches(fm, props), true);
 });

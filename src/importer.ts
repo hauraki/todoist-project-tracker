@@ -6,6 +6,7 @@ import {
 	parseLabelFilter,
 	isTptKey,
 	projectIdFromLink,
+	tptFrontmatterMatches,
 } from './core/frontmatter';
 import { buildRemoteProjects } from './core/remote';
 import { planReconciliation, type LocalProject } from './core/reconcile';
@@ -54,6 +55,7 @@ export async function importProjects(
 			app.vault.getFileByPath(path) ?? (await app.vault.create(path, ''));
 		await writeFrontmatter(app, file, buildProjectFrontmatter(remote, labelFilter, nextTaskLabel));
 	}
+	let updated = 0;
 	let renamed = 0;
 	for (const { baseName, local, remote } of plan.update) {
 		let file = getProjectFile(app, folder, local.baseName);
@@ -68,15 +70,15 @@ export async function importProjects(
 				);
 			}
 		}
-		await writeFrontmatter(app, file, buildProjectFrontmatter(remote, labelFilter, nextTaskLabel));
+		if (await writeFrontmatter(app, file, buildProjectFrontmatter(remote, labelFilter, nextTaskLabel))) {
+			updated++;
+		}
 	}
+	let deleted = 0;
 	for (const local of plan.markDeleted) {
 		const file = getProjectFile(app, folder, local.baseName);
-		await writeFrontmatter(
-			app,
-			file,
-			buildDeletedFrontmatter(local.projectName ?? local.baseName, local.projectId),
-		);
+		const props = buildDeletedFrontmatter(local.projectName ?? local.baseName, local.projectId);
+		if (await writeFrontmatter(app, file, props)) deleted++;
 	}
 	for (const { baseName, remote } of plan.conflicts) {
 		console.warn(
@@ -91,23 +93,24 @@ export async function importProjects(
 
 	return {
 		created: plan.create.length,
-		updated: plan.update.length,
+		updated,
 		renamed,
-		deleted: plan.markDeleted.length,
+		deleted,
 		skipped: plan.conflicts.length,
 	};
 }
 
 export function showImportResult(result: ImportResult): void {
-	const lines = [
-		'Todoist import finished',
-		`Created: ${result.created}`,
-		`Updated: ${result.updated}`,
-		`Marked deleted: ${result.deleted}`,
+	const counts: [string, number][] = [
+		['Created', result.created],
+		['Updated', result.updated],
+		['Renamed', result.renamed],
+		['Marked deleted', result.deleted],
+		['Skipped (name conflict)', result.skipped],
 	];
-	if (result.renamed > 0) lines.push(`Renamed: ${result.renamed}`);
-	if (result.skipped > 0) lines.push(`Skipped (name conflict): ${result.skipped}`);
-	new Notice(lines.join('\n'), 8000);
+	const lines = counts.filter(([, n]) => n > 0).map(([label, n]) => `${label}: ${n}`);
+	if (lines.length === 0) lines.push('No changes');
+	new Notice(['Todoist import finished', ...lines].join('\n'), 8000);
 }
 
 function groupByProject(tasks: TodoistTask[]): Map<string, TodoistTask[]> {
@@ -176,12 +179,16 @@ async function renameProjectFile(
 	return renamed;
 }
 
+/** Writes the `tpt_` properties unless the file already has them. Returns whether the file was written. */
 async function writeFrontmatter(
 	app: App,
 	file: TFile,
 	props: ReturnType<typeof buildProjectFrontmatter>,
-): Promise<void> {
+): Promise<boolean> {
+	const current = app.metadataCache.getFileCache(file)?.frontmatter;
+	if (current && tptFrontmatterMatches(current, props)) return false;
 	await app.fileManager.processFrontMatter(file, (frontmatter: Record<string, unknown>) => {
 		applyTptFrontmatter(frontmatter, props);
 	});
+	return true;
 }

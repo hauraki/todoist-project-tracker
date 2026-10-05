@@ -113,6 +113,33 @@ export function applyTptFrontmatter(
 	}
 }
 
+/**
+ * Reports whether the `tpt_` properties in `frontmatter` already equal `props`, so applying
+ * them would change nothing. Key order is ignored; a missing key does not equal `null`.
+ */
+export function tptFrontmatterMatches(
+	frontmatter: Record<string, unknown>,
+	props: TptFrontmatter,
+): boolean {
+	const currentKeys = Object.keys(frontmatter).filter(isTptKey);
+	const wantedKeys = new Set(Object.keys(props));
+	if (currentKeys.length !== wantedKeys.size) return false;
+	return currentKeys.every(
+		(key) => wantedKeys.has(key) && valueEquals(frontmatter[key], props[key] ?? null),
+	);
+}
+
+function valueEquals(current: unknown, wanted: FrontmatterValue): boolean {
+	if (Array.isArray(wanted)) {
+		return (
+			Array.isArray(current) &&
+			current.length === wanted.length &&
+			current.every((item, i) => item === wanted[i])
+		);
+	}
+	return current === wanted;
+}
+
 function sortKeys(props: TptFrontmatter): TptFrontmatter {
 	return Object.fromEntries(
 		Object.entries(props).sort(([a], [b]) => a.localeCompare(b)),
