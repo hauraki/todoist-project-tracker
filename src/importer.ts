@@ -3,24 +3,16 @@ import {
 	applyTptFrontmatter,
 	buildDeletedFrontmatter,
 	buildProjectFrontmatter,
+	localProjectFromFrontmatter,
 	parseLabelFilter,
-	isTptKey,
-	projectIdFromLink,
 	tptFrontmatterMatches,
 } from './core/frontmatter';
+import { formatImportResult, type ImportResult } from './core/import-result';
 import { buildRemoteProjects } from './core/remote';
 import { planReconciliation, type LocalProject } from './core/reconcile';
 import { TodoistClient } from './todoist/client';
 import type { TodoistTask } from './todoist/types';
 import type { TptSettings } from './settings';
-
-export interface ImportResult {
-	created: number;
-	updated: number;
-	renamed: number;
-	deleted: number;
-	skipped: number;
-}
 
 /** Runs one full import: fetch from Todoist, reconcile against the projects folder, write frontmatter. */
 export async function importProjects(
@@ -101,16 +93,7 @@ export async function importProjects(
 }
 
 export function showImportResult(result: ImportResult): void {
-	const counts: [string, number][] = [
-		['Created', result.created],
-		['Updated', result.updated],
-		['Renamed', result.renamed],
-		['Marked deleted', result.deleted],
-		['Skipped (name conflict)', result.skipped],
-	];
-	const lines = counts.filter(([, n]) => n > 0).map(([label, n]) => `${label}: ${n}`);
-	if (lines.length === 0) lines.push('No changes');
-	new Notice(['Todoist import finished', ...lines].join('\n'), 8000);
+	new Notice(formatImportResult(result), 8000);
 }
 
 function groupByProject(tasks: TodoistTask[]): Map<string, TodoistTask[]> {
@@ -139,17 +122,8 @@ function findLocalProjects(app: App, folder: TFolder): LocalProject[] {
 	for (const child of folder.children) {
 		if (!(child instanceof TFile) || child.extension !== 'md') continue;
 		const frontmatter = app.metadataCache.getFileCache(child)?.frontmatter;
-		if (!frontmatter || !Object.keys(frontmatter).some(isTptKey)) continue;
-		const name: unknown = frontmatter['tpt_project_name'];
-		const id: unknown = frontmatter['tpt_project_id'];
-		locals.push({
-			baseName: child.basename,
-			projectId:
-				typeof id === 'string' || typeof id === 'number'
-					? String(id)
-					: projectIdFromLink(frontmatter['tpt_project_link']),
-			projectName: typeof name === 'string' ? name : null,
-		});
+		const local = localProjectFromFrontmatter(child.basename, frontmatter);
+		if (local) locals.push(local);
 	}
 	return locals;
 }

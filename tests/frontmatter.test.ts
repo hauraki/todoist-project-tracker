@@ -5,6 +5,7 @@ import {
 	buildDeletedFrontmatter,
 	buildProjectFrontmatter,
 	collectLabels,
+	localProjectFromFrontmatter,
 	parseLabelFilter,
 	projectIdFromLink,
 	tptFrontmatterMatches,
@@ -90,6 +91,32 @@ test('projectIdFromLink extracts the id from a todoist project link', () => {
 	assert.equal(projectIdFromLink('todoist://project?id=6Xg7hQ2'), '6Xg7hQ2');
 	assert.equal(projectIdFromLink('https://todoist.com'), null);
 	assert.equal(projectIdFromLink(undefined), null);
+});
+
+test('localProjectFromFrontmatter ignores files without tpt_ keys', () => {
+	assert.equal(localProjectFromFrontmatter('Note', undefined), null);
+	assert.equal(localProjectFromFrontmatter('Note', { tags: ['x'] }), null);
+});
+
+test('localProjectFromFrontmatter reads id and name, coercing a numeric id', () => {
+	assert.deepEqual(
+		localProjectFromFrontmatter('Foo', { tpt_project_id: 123, tpt_project_name: 'Foo' }),
+		{ baseName: 'Foo', projectId: '123', projectName: 'Foo' },
+	);
+});
+
+test('localProjectFromFrontmatter falls back to the link and drops a non-string name', () => {
+	assert.deepEqual(
+		localProjectFromFrontmatter('Foo', {
+			tpt_project_link: 'todoist://project?id=6Xg7hQ2',
+			tpt_project_name: 42,
+		}),
+		{ baseName: 'Foo', projectId: '6Xg7hQ2', projectName: null },
+	);
+	assert.deepEqual(
+		localProjectFromFrontmatter('Foo', { tpt_project_status: 'deleted' }),
+		{ baseName: 'Foo', projectId: null, projectName: null },
+	);
 });
 
 test('applyTptFrontmatter removes old tpt_ keys and keeps user keys first', () => {

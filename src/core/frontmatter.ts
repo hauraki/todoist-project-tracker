@@ -1,6 +1,7 @@
 import type { RemoteProject } from '../todoist/types';
 import { dateRange, toDateOnly } from './dates';
 import { pickNextTask } from './next-task';
+import type { LocalProject } from './reconcile';
 
 export const TPT_PREFIX = 'tpt_';
 
@@ -95,6 +96,27 @@ export function projectIdFromLink(link: unknown): string | null {
 	if (typeof link !== 'string') return null;
 	const match = /^todoist:\/\/project\?id=([^&\s]+)$/.exec(link.trim());
 	return match?.[1] ?? null;
+}
+
+/**
+ * Reads a project file's frontmatter into a `LocalProject`. Returns `null` when the file has no
+ * `tpt_` key, i.e. it is not a project file. Falls back to `tpt_project_link` for the id.
+ */
+export function localProjectFromFrontmatter(
+	baseName: string,
+	frontmatter: Record<string, unknown> | undefined,
+): LocalProject | null {
+	if (!frontmatter || !Object.keys(frontmatter).some(isTptKey)) return null;
+	const name = frontmatter['tpt_project_name'];
+	const id = frontmatter['tpt_project_id'];
+	return {
+		baseName,
+		projectId:
+			typeof id === 'string' || typeof id === 'number'
+				? String(id)
+				: projectIdFromLink(frontmatter['tpt_project_link']),
+		projectName: typeof name === 'string' ? name : null,
+	};
 }
 
 /**
