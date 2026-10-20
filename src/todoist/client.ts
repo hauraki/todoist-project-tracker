@@ -1,13 +1,9 @@
 import { requestUrl } from 'obsidian';
+import { isPage } from './page';
 import type { TodoistProject, TodoistTask } from './types';
 
 const BASE_URL = 'https://api.todoist.com/api/v1';
 const PAGE_SIZE = 200;
-
-interface Page<T> {
-	results: T[];
-	next_cursor: string | null;
-}
 
 /**
  * Minimal read-only client for the Todoist REST API v1.
@@ -42,14 +38,18 @@ export class TodoistClient {
 				limit: String(PAGE_SIZE),
 			});
 			if (cursor) query.set('cursor', cursor);
-			const page: Page<T> = await this.get<Page<T>>(`${path}?${query}`);
-			items.push(...page.results);
+			const page = await this.get(`${path}?${query}`);
+			if (!isPage(page)) {
+				throw new Error(`Unexpected Todoist API response for ${path}`);
+			}
+			// The items themselves are trusted to match T.
+			items.push(...(page.results as T[]));
 			cursor = page.next_cursor;
 		} while (cursor);
 		return items;
 	}
 
-	private async get<T>(pathWithQuery: string): Promise<T> {
+	private async get(pathWithQuery: string): Promise<unknown> {
 		const response = await requestUrl({
 			url: `${BASE_URL}${pathWithQuery}`,
 			method: 'GET',
@@ -61,6 +61,6 @@ export class TodoistClient {
 				`Todoist API request failed (${response.status}) for ${pathWithQuery}`,
 			);
 		}
-		return response.json as T;
+		return response.json as unknown;
 	}
 }
