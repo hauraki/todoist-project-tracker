@@ -4,8 +4,7 @@
 	"version": "0.1.0",
 	"minAppVersion": "1.5.7",
 	"description": "Imports your Todoist projects into Obsidian to track their status.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"author": "Norbert Stein",
+	"authorUrl": "https://github.com/hauraki",
 	"isDesktopOnly": false
 }

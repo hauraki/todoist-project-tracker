@@ -21,10 +21,20 @@ jobs:
                   node-version: 24
                   cache: 'npm'
 
+            - name: Check tag matches manifest version
+              run: |
+                  tag="${GITHUB_REF#refs/tags/}"
+                  version="$(node -p "require('./manifest.json').version")"
+                  if [ "$tag" != "$version" ]; then
+                      echo "::error::Tag $tag does not match manifest.json version $version"
+                      exit 1
+                  fi
+
             - name: Build plugin
               run: |
                   npm ci
                   npm run build
+                  npm test
 
             - name: Check for optional styles
               id: styles
@@ -35,7 +45,7 @@ jobs:
               uses: actions/attest@v4
               with:
                   subject-path: |
-                      main.js
+                      dist/main.js
                       ${{ steps.styles.outputs.exists == 'true' && 'styles.css' || '' }}
 
             - name: Create release
@@ -47,4 +57,4 @@ jobs:
                   gh release create "$tag" \
                     --title="$tag" \
                     --draft \
-                    main.js manifest.json ${{ steps.styles.outputs.exists == 'true' && 'styles.css' || '' }}
+                    dist/main.js manifest.json ${{ steps.styles.outputs.exists == 'true' && 'styles.css' || '' }}
