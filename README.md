@@ -4,6 +4,12 @@ An Obsidian plugin that imports your Todoist projects into your vault so you can
 
 The plugin is **read-only** towards Todoist: it only ever reads data via the Todoist API and never writes anything back.
 
+## Network use and privacy
+
+- The plugin connects to the Todoist API (`api.todoist.com`) and nowhere else. It only does so when you run **Import projects**.
+- No telemetry or analytics are collected, and no vault content is sent anywhere.
+- Your Todoist API token is stored in plain text in `.obsidian/plugins/todoist-project-tracker/data.json` inside your vault. If you sync your vault (Obsidian Sync, iCloud, git, …), the token is synced with it. Keep that file out of public repositories.
+
 ## Settings
 
 - **Todoist API token** (required): your personal API token, found in Todoist under **Settings → Integrations → Developer**.
@@ -61,3 +67,7 @@ npm run lint
 ```
 
 The plugin folder must live in `<Vault>/.obsidian/plugins/todoist-project-tracker/`. Reload Obsidian after building and enable the plugin under **Settings → Community plugins**.
+
+## License
+
+[MIT](LICENSE)
