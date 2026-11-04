@@ -1,4 +1,5 @@
 import { App, PluginSettingTab, SecretComponent, Setting, type SettingDefinitionItem } from 'obsidian';
+import { AUTO_IMPORT_INTERVALS, DEFAULT_AUTO_IMPORT_INTERVAL, parseAutoImportInterval } from './core/auto-import';
 import type TodoistProjectTrackerPlugin from './main';
 
 export interface TptSettings {
@@ -7,6 +8,8 @@ export interface TptSettings {
 	projects_folder: string;
 	label_filter: string;
 	next_task_label: string;
+	/** Minutes between background imports as a string, e.g. "15"; "0" turns them off. */
+	auto_import_interval: string;
 }
 
 export const DEFAULT_SETTINGS: TptSettings = {
@@ -14,6 +17,7 @@ export const DEFAULT_SETTINGS: TptSettings = {
 	projects_folder: 'TPT',
 	label_filter: '',
 	next_task_label: '',
+	auto_import_interval: String(DEFAULT_AUTO_IMPORT_INTERVAL),
 };
 
 const TOKEN_DESC =
@@ -23,6 +27,12 @@ const LABEL_FILTER_DESC =
 	'Optional. Comma-separated list of labels, e.g. "Today, Week, Month". Only these labels are written to tpt_tasks_labels, in this order (matched case-insensitively). Leave empty to import all labels.';
 const NEXT_TASK_LABEL_DESC =
 	'Optional. The task with this label is written to tpt_tasks_next_content (matched case-insensitively). Use it on one task per project. Projects without a labelled task fall back to the task with the earliest due date or deadline.';
+
+const AUTO_IMPORT_DESC =
+	'Imports in the background shortly after you open or return to Obsidian, and at this interval while it is open. Runs silently and only shows a notice if it fails. Only on devices with an API token.';
+const AUTO_IMPORT_OPTIONS: Record<string, string> = Object.fromEntries(
+	AUTO_IMPORT_INTERVALS.map((minutes) => [String(minutes), minutes === 0 ? 'Off' : `Every ${minutes} minutes`]),
+);
 
 export class TptSettingTab extends PluginSettingTab {
 	plugin: TodoistProjectTrackerPlugin;
@@ -68,10 +78,22 @@ export class TptSettingTab extends PluginSettingTab {
 					placeholder: 'Label',
 				},
 			},
+			{
+				name: 'Auto-import',
+				desc: AUTO_IMPORT_DESC,
+				control: {
+					type: 'dropdown',
+					key: 'auto_import_interval',
+					options: AUTO_IMPORT_OPTIONS,
+				},
+			},
 		];
 	}
 
 	getControlValue(key: string): unknown {
+		if (key === 'auto_import_interval') {
+			return String(parseAutoImportInterval(this.plugin.settings.auto_import_interval));
+		}
 		return this.plugin.settings[key as keyof TptSettings];
 	}
 
@@ -83,6 +105,8 @@ export class TptSettingTab extends PluginSettingTab {
 			this.plugin.settings.label_filter = trimmed as string;
 		} else if (key === 'next_task_label') {
 			this.plugin.settings.next_task_label = trimmed as string;
+		} else if (key === 'auto_import_interval') {
+			this.plugin.settings.auto_import_interval = String(parseAutoImportInterval(trimmed as string));
 		}
 		await this.plugin.saveSettings();
 	}
@@ -143,6 +167,19 @@ export class TptSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.next_task_label)
 					.onChange(async (value) => {
 						this.plugin.settings.next_task_label = value.trim();
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName('Auto-import')
+			.setDesc(AUTO_IMPORT_DESC)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOptions(AUTO_IMPORT_OPTIONS)
+					.setValue(String(parseAutoImportInterval(this.plugin.settings.auto_import_interval)))
+					.onChange(async (value) => {
+						this.plugin.settings.auto_import_interval = String(parseAutoImportInterval(value));
 						await this.plugin.saveSettings();
 					}),
 			);

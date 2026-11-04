@@ -14,6 +14,12 @@ import { TodoistClient } from './todoist/client';
 import type { TodoistTask } from './todoist/types';
 import type { TptSettings } from './settings';
 
+/** Whether a Todoist API token is selected and present in this device's secret storage. */
+export function hasToken(app: App, settings: TptSettings): boolean {
+	const secretId = settings.todoist_api_token_secret;
+	return !!secretId && !!app.secretStorage.getSecret(secretId)?.trim();
+}
+
 /** Runs one full import: fetch from Todoist, reconcile against the projects folder, write frontmatter. */
 export async function importProjects(
 	app: App,

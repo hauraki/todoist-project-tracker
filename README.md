@@ -6,7 +6,7 @@ The plugin is **read-only** towards Todoist: it only ever reads data via the Tod
 
 ## Network use and privacy
 
-- The plugin connects to the Todoist API (`api.todoist.com`) and nowhere else. It only does so when you run **Import projects**.
+- The plugin connects to the Todoist API (`api.todoist.com`) and nowhere else. It only does so when you run **Import projects**, or in the background when **Auto-import** is on (shortly after you open or return to Obsidian and every 15 minutes by default, only while Obsidian is open and only on devices with an API token). Set **Auto-import** to **Off** to connect only when you import manually.
 - No telemetry or analytics are collected, and no vault content is sent anywhere.
 - Your Todoist API token is kept in Obsidian's secret storage (**Settings → Keychain**), encrypted by your operating system. It is stored on this device only and not synced with your vault; `data.json` holds only the name of the secret. On Linux, encryption requires kwallet or gnome-libsecret.
 - Like all plugin data, secrets in Obsidian's secret storage can be read by other plugins you install. Only install plugins you trust.
@@ -16,6 +16,7 @@ The plugin is **read-only** towards Todoist: it only ever reads data via the Tod
 - **Todoist API token** (required): select or create a secret that holds your personal API token, found in Todoist under **Settings → Integrations → Developer**. Because secrets are not synced, add the token on each device you import from.
 - **Projects folder** (optional): the vault folder that holds the project files. Defaults to `TPT`.
 - **Label filter** (optional): comma-separated list of labels. Only these labels are written to `tpt_tasks_labels`, in this order. Leave empty to import all labels.
+- **Auto-import** (optional): how often to import in the background while Obsidian is open: off, or every 5, 15 (default), 30 or 60 minutes. It also imports 30 seconds after you open or return to Obsidian, if the last import is older than that; the wait gives sync time to bring in changes from your other devices first. Background imports are silent and only show a notice if they fail. Bases that show the project files update on their own after each import.
 - **Next task label** (optional): the label that marks a project's next task. Use it on one task per project; if several tasks carry it, any one of them is picked.
 
 ## Commands
