@@ -1,22 +1,23 @@
-import { App, PluginSettingTab, Setting, type SettingDefinitionItem } from 'obsidian';
+import { App, PluginSettingTab, SecretComponent, Setting, type SettingDefinitionItem } from 'obsidian';
 import type TodoistProjectTrackerPlugin from './main';
 
 export interface TptSettings {
-	todoist_api_token: string;
+	/** ID of the secret in Obsidian's secret storage that holds the token, not the token itself. */
+	todoist_api_token_secret: string;
 	projects_folder: string;
 	label_filter: string;
 	next_task_label: string;
 }
 
 export const DEFAULT_SETTINGS: TptSettings = {
-	todoist_api_token: '',
+	todoist_api_token_secret: '',
 	projects_folder: 'TPT',
 	label_filter: '',
 	next_task_label: '',
 };
 
 const TOKEN_DESC =
-	'Required. Find it in todoist under settings → integrations → developer. The plugin only reads from todoist and never writes to it.';
+	'Required. Find it in todoist under settings → integrations → developer. Kept encrypted in Obsidian\'s keychain on this device and not synced with your vault, so add it on each device. The plugin only reads from todoist and never writes to it.';
 const FOLDER_DESC = 'Vault folder that holds the project files. Created on first import if missing.';
 const LABEL_FILTER_DESC =
 	'Optional. Comma-separated list of labels, e.g. "Today, Week, Month". Only these labels are written to tpt_tasks_labels, in this order (matched case-insensitively). Leave empty to import all labels.';
@@ -38,11 +39,7 @@ export class TptSettingTab extends PluginSettingTab {
 			{
 				name: 'Todoist API token',
 				desc: TOKEN_DESC,
-				control: {
-					type: 'text',
-					key: 'todoist_api_token',
-					placeholder: 'API token',
-				},
+				render: (setting) => this.addTokenSecret(setting),
 			},
 			{
 				name: 'Projects folder',
@@ -82,8 +79,6 @@ export class TptSettingTab extends PluginSettingTab {
 		const trimmed = typeof value === 'string' ? value.trim() : value;
 		if (key === 'projects_folder') {
 			this.plugin.settings.projects_folder = (trimmed as string) || DEFAULT_SETTINGS.projects_folder;
-		} else if (key === 'todoist_api_token') {
-			this.plugin.settings.todoist_api_token = trimmed as string;
 		} else if (key === 'label_filter') {
 			this.plugin.settings.label_filter = trimmed as string;
 		} else if (key === 'next_task_label') {
@@ -92,24 +87,25 @@ export class TptSettingTab extends PluginSettingTab {
 		await this.plugin.saveSettings();
 	}
 
-	// Deprecated since 1.13.0; kept only for Obsidian versions older than this
-	// plugin's manifest minAppVersion allows, which never call getSettingDefinitions().
+	/** Secret picker: the user selects or creates a keychain entry; only its ID is saved in data.json. */
+	private addTokenSecret(setting: Setting): void {
+		setting.addComponent((el) =>
+			new SecretComponent(this.app, el)
+				.setValue(this.plugin.settings.todoist_api_token_secret)
+				.onChange(async (id) => {
+					this.plugin.settings.todoist_api_token_secret = id;
+					await this.plugin.saveSettings();
+				}),
+		);
+	}
+
+	// Deprecated since 1.13.0; kept for Obsidian 1.11.5–1.12.x (this plugin's
+	// minAppVersion is 1.11.5), which never call getSettingDefinitions().
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		new Setting(containerEl)
-			.setName('Todoist API token')
-			.setDesc(TOKEN_DESC)
-			.addText((text) =>
-				text
-					.setPlaceholder('API token')
-					.setValue(this.plugin.settings.todoist_api_token)
-					.onChange(async (value) => {
-						this.plugin.settings.todoist_api_token = value.trim();
-						await this.plugin.saveSettings();
-					}),
-			);
+		this.addTokenSecret(new Setting(containerEl).setName('Todoist API token').setDesc(TOKEN_DESC));
 
 		new Setting(containerEl)
 			.setName('Projects folder')

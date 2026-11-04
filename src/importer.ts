@@ -19,9 +19,15 @@ export async function importProjects(
 	app: App,
 	settings: TptSettings,
 ): Promise<ImportResult> {
-	const token = settings.todoist_api_token.trim();
+	const secretId = settings.todoist_api_token_secret;
+	if (!secretId) {
+		throw new Error('No Todoist API token selected. Select one in the plugin settings.');
+	}
+	const token = app.secretStorage.getSecret(secretId)?.trim();
 	if (!token) {
-		throw new Error('No Todoist API token configured. Add it in the plugin settings.');
+		throw new Error(
+			`Secret "${secretId}" is not set on this device. Add your Todoist API token in the plugin settings.`,
+		);
 	}
 	const client = new TodoistClient(token);
 	const labelFilter = parseLabelFilter(settings.label_filter ?? '');

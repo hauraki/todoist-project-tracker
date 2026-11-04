@@ -39,11 +39,16 @@ export default class TodoistProjectTrackerPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<TptSettings>,
-		);
+		const data = ((await this.loadData()) ?? {}) as Record<string, unknown>;
+		// Keep only known keys so stale ones (e.g. a former plain-text token) are dropped from data.json.
+		const settings = { ...DEFAULT_SETTINGS };
+		for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof TptSettings)[]) {
+			if (typeof data[key] === 'string') settings[key] = data[key];
+		}
+		this.settings = settings;
+		if (Object.keys(data).some((key) => !(key in DEFAULT_SETTINGS))) {
+			await this.saveSettings();
+		}
 	}
 
 	async saveSettings() {

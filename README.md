@@ -8,11 +8,12 @@ The plugin is **read-only** towards Todoist: it only ever reads data via the Tod
 
 - The plugin connects to the Todoist API (`api.todoist.com`) and nowhere else. It only does so when you run **Import projects**.
 - No telemetry or analytics are collected, and no vault content is sent anywhere.
-- Your Todoist API token is stored in plain text in `.obsidian/plugins/todoist-project-tracker/data.json` inside your vault. If you sync your vault (Obsidian Sync, iCloud, git, …), the token is synced with it. Keep that file out of public repositories.
+- Your Todoist API token is kept in Obsidian's secret storage (**Settings → Keychain**), encrypted by your operating system. It is stored on this device only and not synced with your vault; `data.json` holds only the name of the secret. On Linux, encryption requires kwallet or gnome-libsecret.
+- Like all plugin data, secrets in Obsidian's secret storage can be read by other plugins you install. Only install plugins you trust.
 
 ## Settings
 
-- **Todoist API token** (required): your personal API token, found in Todoist under **Settings → Integrations → Developer**.
+- **Todoist API token** (required): select or create a secret that holds your personal API token, found in Todoist under **Settings → Integrations → Developer**. Because secrets are not synced, add the token on each device you import from.
 - **Projects folder** (optional): the vault folder that holds the project files. Defaults to `TPT`.
 - **Label filter** (optional): comma-separated list of labels. Only these labels are written to `tpt_tasks_labels`, in this order. Leave empty to import all labels.
 - **Next task label** (optional): the label that marks a project's next task. Use it on one task per project; if several tasks carry it, any one of them is picked.

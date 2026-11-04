@@ -2,7 +2,7 @@
 	"id": "todoist-project-tracker",
 	"name": "Todoist Project Tracker",
 	"version": "0.1.0",
-	"minAppVersion": "1.5.7",
+	"minAppVersion": "1.11.5",
 	"description": "Imports your Todoist projects into Obsidian to track their status.",
 	"author": "Norbert Stein",
 	"authorUrl": "https://github.com/hauraki",
