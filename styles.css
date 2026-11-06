@@ -1,8 +1,66 @@
 /*
+Todoist colors and the project icon, for use in Bases (or any html()) formulas:
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+  html("<span class=\"tpt-hash tpt-color-" + tpt_project_color + "\">#</span>")
 
-If your plugin does not need CSS, delete this file.
-
+`--tpt-color-<name>` holds each Todoist color; override them in a snippet to adjust.
+`.tpt-color-<name>` sets `--tpt-color`, which `.tpt-hash` paints with.
 */
+
+body {
+	--tpt-color-berry_red: #b8255f;
+	--tpt-color-red: #dc4c3e;
+	--tpt-color-orange: #c77100;
+	--tpt-color-yellow: #b29104;
+	--tpt-color-olive_green: #949c31;
+	--tpt-color-lime_green: #65a33a;
+	--tpt-color-green: #369307;
+	--tpt-color-mint_green: #42a393;
+	--tpt-color-teal: #148fad;
+	--tpt-color-sky_blue: #319dc0;
+	--tpt-color-light_blue: #6988a4;
+	--tpt-color-blue: #4180ff;
+	--tpt-color-grape: #692ec2;
+	--tpt-color-violet: #ca3fee;
+	--tpt-color-lavender: #a4698c;
+	--tpt-color-magenta: #e05095;
+	--tpt-color-salmon: #c9766f;
+	--tpt-color-charcoal: #808080;
+	--tpt-color-grey: #999999;
+	--tpt-color-taupe: #8f7a69;
+}
+
+.tpt-color-berry_red { --tpt-color: var(--tpt-color-berry_red); }
+.tpt-color-red { --tpt-color: var(--tpt-color-red); }
+.tpt-color-orange { --tpt-color: var(--tpt-color-orange); }
+.tpt-color-yellow { --tpt-color: var(--tpt-color-yellow); }
+.tpt-color-olive_green { --tpt-color: var(--tpt-color-olive_green); }
+.tpt-color-lime_green { --tpt-color: var(--tpt-color-lime_green); }
+.tpt-color-green { --tpt-color: var(--tpt-color-green); }
+.tpt-color-mint_green { --tpt-color: var(--tpt-color-mint_green); }
+.tpt-color-teal { --tpt-color: var(--tpt-color-teal); }
+.tpt-color-sky_blue { --tpt-color: var(--tpt-color-sky_blue); }
+.tpt-color-light_blue { --tpt-color: var(--tpt-color-light_blue); }
+.tpt-color-blue { --tpt-color: var(--tpt-color-blue); }
+.tpt-color-grape { --tpt-color: var(--tpt-color-grape); }
+.tpt-color-violet { --tpt-color: var(--tpt-color-violet); }
+.tpt-color-lavender { --tpt-color: var(--tpt-color-lavender); }
+.tpt-color-magenta { --tpt-color: var(--tpt-color-magenta); }
+.tpt-color-salmon { --tpt-color: var(--tpt-color-salmon); }
+.tpt-color-charcoal { --tpt-color: var(--tpt-color-charcoal); }
+.tpt-color-grey { --tpt-color: var(--tpt-color-grey); }
+.tpt-color-taupe { --tpt-color: var(--tpt-color-taupe); }
+
+/* A slanted "#" drawn with an SVG mask, so it looks the same in every theme font.
+   The text inside stays in the DOM for copying but is not visible. */
+.tpt-hash {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	vertical-align: -0.125em;
+	overflow: hidden;
+	color: transparent;
+	background-color: var(--tpt-color, var(--text-muted));
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6.6 2.2 5.2 13.8M11.3 2.2 9.9 13.8M2.6 5.9h11M2.2 10.1h11' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6.6 2.2 5.2 13.8M11.3 2.2 9.9 13.8M2.6 5.9h11M2.2 10.1h11' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}

@@ -58,6 +58,21 @@ On import:
 
 Two projects whose names normalize to the same file name cannot both be tracked; the second one is skipped and a warning is logged to the developer console. Likewise, a renamed project keeps its old file name if the new one is already taken.
 
+## Styling
+
+The plugin's stylesheet provides Todoist's project colors and a colored `#` icon for use in Bases formulas. For example, this formula shows the icon in the project's color and opens the project in Todoist:
+
+```yaml
+formulas:
+  icon: link(tpt_project_link, html("<span class=\"tpt-hash tpt-color-" + tpt_project_color + "\">#</span>"))
+```
+
+- `tpt-hash`: the icon, drawn in the current `--tpt-color`. Without a color (for example on deleted projects) it is drawn in the muted text color.
+- `tpt-color-<name>`: sets `--tpt-color` to a Todoist color, named as in `tpt_project_color` (`blue`, `berry_red`, …).
+- `--tpt-color-<name>`: the color values. Override them in a CSS snippet to adjust them.
+
+These class and variable names may still change before version 1.0.
+
 ## Development
 
 ```bash
