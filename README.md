@@ -22,6 +22,7 @@ The plugin is **read-only** towards Todoist: it only ever reads data via the Tod
 ## Commands
 
 - **Import projects**: fetches all active and archived projects (and the active tasks of active projects) and your labels from Todoist and reconciles them with the files in the projects folder. A notice shows how many files were created, updated, renamed and marked as deleted.
+- **Create projects base**: creates a sample base next to the projects folder, named after it (for example `TPT.base`), and opens it. Its **Active** view lists your active projects with a Todoist icon, rank, parent, task count, next due date or deadline and colored labels. An existing file is never overwritten; a new one gets a number instead (`TPT 1.base`). The base is yours to change; the plugin does not update it later. It requires the **Bases** core plugin. If you rename the projects folder afterwards, update the folder in the base's filter or create a new base.
 
 ## How it works
 

@@ -13,7 +13,7 @@ import { buildRemoteProjects } from './core/remote';
 import { planReconciliation, type LocalProject } from './core/reconcile';
 import { TodoistClient } from './todoist/client';
 import type { RemoteProject, TodoistTask } from './todoist/types';
-import type { TptSettings } from './settings';
+import { DEFAULT_SETTINGS, type TptSettings } from './settings';
 
 /** Whether a Todoist API token is selected and present in this device's secret storage. */
 export function hasToken(app: App, settings: TptSettings): boolean {
@@ -52,7 +52,7 @@ export async function importProjects(
 	const build = (remote: RemoteProject) =>
 		buildProjectFrontmatter(remote, labelFilter, nextTaskLabel, labelColors);
 
-	const folder = await ensureFolder(app, settings.projects_folder);
+	const folder = await ensureFolder(app, settings);
 	const locals = findLocalProjects(app, folder);
 	const plan = planReconciliation(remotes, locals);
 
@@ -123,8 +123,13 @@ function groupByProject(tasks: TodoistTask[]): Map<string, TodoistTask[]> {
 	return byProject;
 }
 
-async function ensureFolder(app: App, folderSetting: string): Promise<TFolder> {
-	const path = normalizePath(folderSetting.trim() || 'TPT');
+/** The vault path of the projects folder, normalized; falls back to the default when empty. */
+export function projectsFolderPath(settings: TptSettings): string {
+	return normalizePath(settings.projects_folder.trim() || DEFAULT_SETTINGS.projects_folder);
+}
+
+async function ensureFolder(app: App, settings: TptSettings): Promise<TFolder> {
+	const path = projectsFolderPath(settings);
 	const existing = app.vault.getFolderByPath(path);
 	if (existing) return existing;
 	if (app.vault.getAbstractFileByPath(path)) {

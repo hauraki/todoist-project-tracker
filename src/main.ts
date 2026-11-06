@@ -1,6 +1,7 @@
 import { Notice, Plugin } from 'obsidian';
 import { registerAutoImport } from './auto-import';
 import { importProjects, showImportResult } from './importer';
+import { createProjectsBase } from './projects-base';
 import { DEFAULT_SETTINGS, TptSettingTab, type TptSettings } from './settings';
 
 export default class TodoistProjectTrackerPlugin extends Plugin {
@@ -18,6 +19,12 @@ export default class TodoistProjectTrackerPlugin extends Plugin {
 			id: 'import-projects',
 			name: 'Import projects',
 			callback: () => void this.runImport(),
+		});
+
+		this.addCommand({
+			id: 'create-projects-base',
+			name: 'Create projects base',
+			callback: () => void createProjectsBase(this, this.settings),
 		});
 
 		this.addSettingTab(new TptSettingTab(this.app, this));
