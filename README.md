@@ -21,7 +21,7 @@ The plugin is **read-only** towards Todoist: it only ever reads data via the Tod
 
 ## Commands
 
-- **Import projects**: fetches all active and archived projects (and the active tasks of active projects) from Todoist and reconciles them with the files in the projects folder. A notice shows how many files were created, updated, renamed and marked as deleted.
+- **Import projects**: fetches all active and archived projects (and the active tasks of active projects) and your labels from Todoist and reconciles them with the files in the projects folder. A notice shows how many files were created, updated, renamed and marked as deleted.
 
 ## How it works
 
@@ -42,6 +42,7 @@ All properties written by the plugin are prefixed with `tpt_`. You can add your 
 | `tpt_project_status` | `active` | `archived` | `deleted` |
 | `tpt_tasks_count` | ✓ | | |
 | `tpt_tasks_labels` | set of all task labels, or only the labels listed in the **Label filter** setting (in that order) | | |
+| `tpt_tasks_label_colors` | Todoist color of each label in `tpt_tasks_labels`, in the same order; empty for shared labels | | |
 | `tpt_tasks_first_due_on` / `tpt_tasks_last_due_on` | earliest / latest due date | | |
 | `tpt_tasks_first_deadline_on` / `tpt_tasks_last_deadline_on` | earliest / latest deadline | | |
 | `tpt_tasks_next_content` | text of the next task, or empty | | |
@@ -67,7 +68,15 @@ formulas:
   icon: link(tpt_project_link, html("<span class=\"tpt-hash tpt-color-" + tpt_project_color + "\">#</span>"))
 ```
 
+This formula shows the task labels in their Todoist colors:
+
+```yaml
+formulas:
+  labels: tpt_tasks_labels.map(html("<span class=\"tpt-label tpt-color-" + tpt_tasks_label_colors[index] + "\">" + value + "</span>"))
+```
+
 - `tpt-hash`: the icon, drawn in the current `--tpt-color`. Without a color (for example on deleted projects) it is drawn in the muted text color.
+- `tpt-label`: text in the current `--tpt-color`, or the normal text color without one.
 - `tpt-color-<name>`: sets `--tpt-color` to a Todoist color, named as in `tpt_project_color` (`blue`, `berry_red`, …).
 - `--tpt-color-<name>`: the color values. Override them in a CSS snippet to adjust them.
 

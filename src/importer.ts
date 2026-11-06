@@ -2,6 +2,7 @@ import { App, Notice, TFile, TFolder, normalizePath } from 'obsidian';
 import {
 	applyTptFrontmatter,
 	buildDeletedFrontmatter,
+	buildLabelColors,
 	buildProjectFrontmatter,
 	localProjectFromFrontmatter,
 	parseLabelFilter,
@@ -11,7 +12,7 @@ import { formatImportResult, type ImportResult } from './core/import-result';
 import { buildRemoteProjects } from './core/remote';
 import { planReconciliation, type LocalProject } from './core/reconcile';
 import { TodoistClient } from './todoist/client';
-import type { TodoistTask } from './todoist/types';
+import type { RemoteProject, TodoistTask } from './todoist/types';
 import type { TptSettings } from './settings';
 
 /** Whether a Todoist API token is selected and present in this device's secret storage. */
@@ -40,12 +41,16 @@ export async function importProjects(
 	const nextTaskLabel = settings.next_task_label ?? '';
 
 	// One paginated request for all tasks instead of one request per project.
-	const [active, archived, tasks] = await Promise.all([
+	const [active, archived, tasks, labels] = await Promise.all([
 		client.getActiveProjects(),
 		client.getArchivedProjects(),
 		client.getActiveTasks(),
+		client.getLabels(),
 	]);
 	const remotes = buildRemoteProjects(active, archived, groupByProject(tasks));
+	const labelColors = buildLabelColors(labels);
+	const build = (remote: RemoteProject) =>
+		buildProjectFrontmatter(remote, labelFilter, nextTaskLabel, labelColors);
 
 	const folder = await ensureFolder(app, settings.projects_folder);
 	const locals = findLocalProjects(app, folder);
@@ -57,7 +62,7 @@ export async function importProjects(
 		// (for example a plain note with that name). Update it instead of failing.
 		const file =
 			app.vault.getFileByPath(path) ?? (await app.vault.create(path, ''));
-		await writeFrontmatter(app, file, buildProjectFrontmatter(remote, labelFilter, nextTaskLabel));
+		await writeFrontmatter(app, file, build(remote));
 	}
 	let updated = 0;
 	let renamed = 0;
@@ -74,7 +79,7 @@ export async function importProjects(
 				);
 			}
 		}
-		if (await writeFrontmatter(app, file, buildProjectFrontmatter(remote, labelFilter, nextTaskLabel))) {
+		if (await writeFrontmatter(app, file, build(remote))) {
 			updated++;
 		}
 	}

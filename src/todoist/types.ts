@@ -10,6 +10,13 @@ export interface TodoistProject {
 	description: string;
 }
 
+/** Subset of the Todoist API v1 personal label object that this plugin uses. */
+export interface TodoistLabel {
+	id: string;
+	name: string;
+	color: string;
+}
+
 /** Todoist due object. `date` is `YYYY-MM-DD`, `YYYY-MM-DDTHH:MM:SS` or `YYYY-MM-DDTHH:MM:SSZ`. */
 export interface TodoistDue {
 	date: string;

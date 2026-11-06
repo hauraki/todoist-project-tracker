@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import {
 	applyTptFrontmatter,
 	buildDeletedFrontmatter,
+	buildLabelColors,
 	buildProjectFrontmatter,
 	collectLabels,
+	colorsForLabels,
 	localProjectFromFrontmatter,
 	parseLabelFilter,
 	projectIdFromLink,
@@ -51,6 +53,7 @@ test('active project gets all properties, sorted alphabetically', () => {
 		tpt_tasks_count: 3,
 		tpt_tasks_first_deadline_on: '2026-02-15',
 		tpt_tasks_first_due_on: '2026-01-05',
+		tpt_tasks_label_colors: ['', ''],
 		tpt_tasks_labels: ['a', 'b'],
 		tpt_tasks_last_deadline_on: '2026-03-01',
 		tpt_tasks_last_due_on: '2026-02-01',
@@ -171,6 +174,34 @@ test('buildProjectFrontmatter applies the label filter to tpt_tasks_labels', () 
 		['Today', 'Week'],
 	);
 	assert.deepEqual(fm['tpt_tasks_labels'], ['Today', 'Week']);
+});
+
+test('colorsForLabels returns colors in label order, case-insensitively, empty when unknown', () => {
+	const colors = buildLabelColors([
+		{ id: 'l1', name: 'Today', color: 'green' },
+		{ id: 'l2', name: 'week', color: 'lime_green' },
+	]);
+	assert.deepEqual(colorsForLabels(['Week', 'shared', 'today'], colors), ['lime_green', '', 'green']);
+	assert.deepEqual(colorsForLabels([], colors), []);
+});
+
+test('buildProjectFrontmatter writes label colors parallel to the filtered labels', () => {
+	const fm = buildProjectFrontmatter(
+		{
+			project: project(),
+			rank: 1,
+			parentName: null,
+			tasks: [{ id: 't1', project_id: 'p1', content: 't1', labels: ['week', 'Today', 'x'], due: null, deadline: null }],
+		},
+		['Today', 'Week'],
+		'',
+		buildLabelColors([
+			{ id: 'l1', name: 'Today', color: 'green' },
+			{ id: 'l2', name: 'week', color: 'lime_green' },
+		]),
+	);
+	assert.deepEqual(fm['tpt_tasks_labels'], ['Today', 'Week']);
+	assert.deepEqual(fm['tpt_tasks_label_colors'], ['green', 'lime_green']);
 });
 
 test('tptFrontmatterMatches ignores key order and user properties', () => {

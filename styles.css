@@ -2,6 +2,7 @@
 Todoist colors and the project icon, for use in Bases (or any html()) formulas:
 
   html("<span class=\"tpt-hash tpt-color-" + tpt_project_color + "\">#</span>")
+  tpt_tasks_labels.map(html("<span class=\"tpt-label tpt-color-" + tpt_tasks_label_colors[index] + "\">" + value + "</span>"))
 
 `--tpt-color-<name>` holds each Todoist color; override them in a snippet to adjust.
 `.tpt-color-<name>` sets `--tpt-color`, which `.tpt-hash` paints with.
@@ -50,6 +51,19 @@ body {
 .tpt-color-charcoal { --tpt-color: var(--tpt-color-charcoal); }
 .tpt-color-grey { --tpt-color: var(--tpt-color-grey); }
 .tpt-color-taupe { --tpt-color: var(--tpt-color-taupe); }
+
+/* A label in its Todoist color with a rounded outline; without a known color it keeps the normal text color. */
+.tpt-label {
+	color: var(--tpt-color, inherit);
+	border: 1px solid currentColor;
+	border-color: color-mix(in srgb, currentColor 55%, transparent);
+	border-radius: 0.7em;
+	display: inline-block;
+	padding: 0.1em 0.55em;
+	margin-right: 0.3em;
+	line-height: 1.3;
+	white-space: nowrap;
+}
 
 /* A slanted "#" drawn with an SVG mask, so it looks the same in every theme font.
    The text inside stays in the DOM for copying but is not visible. */

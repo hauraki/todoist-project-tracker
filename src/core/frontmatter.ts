@@ -1,4 +1,4 @@
-import type { RemoteProject } from '../todoist/types';
+import type { RemoteProject, TodoistLabel } from '../todoist/types';
 import { dateRange, toDateOnly } from './dates';
 import { pickNextTask } from './next-task';
 import type { LocalProject } from './reconcile';
@@ -33,15 +33,30 @@ export function collectLabels(tasks: RemoteProject['tasks'], labelFilter: string
 	return labelFilter.filter((label) => presentLower.has(label.toLowerCase()));
 }
 
+/** Label name (lower-cased) → Todoist color name. */
+export type LabelColors = Map<string, string>;
+
+/** Indexes Todoist labels by lower-cased name, so filter spellings still find their color. */
+export function buildLabelColors(labels: TodoistLabel[]): LabelColors {
+	return new Map(labels.map((l) => [l.name.toLowerCase(), l.color]));
+}
+
+/** The color of each label, in the same order; empty for labels without a known color (e.g. shared labels). */
+export function colorsForLabels(labels: string[], labelColors: LabelColors): string[] {
+	return labels.map((label) => labelColors.get(label.toLowerCase()) ?? '');
+}
+
 /**
  * Builds the `tpt_` properties for an active or archived remote project, keys sorted alphabetically.
  * `labelFilter` restricts and orders `tpt_tasks_labels`; empty means all labels.
  * `nextTaskLabel` marks the task written to `tpt_tasks_next_content`; empty means pick by date only.
+ * `labelColors` provides `tpt_tasks_label_colors`, parallel to `tpt_tasks_labels`.
  */
 export function buildProjectFrontmatter(
 	remote: RemoteProject,
 	labelFilter: string[] = [],
 	nextTaskLabel = '',
+	labelColors: LabelColors = new Map(),
 ): TptFrontmatter {
 	const { project, tasks } = remote;
 	const props: TptFrontmatter = {
@@ -69,6 +84,7 @@ export function buildProjectFrontmatter(
 			tpt_tasks_count: tasks.length,
 			tpt_tasks_first_deadline_on: deadline.first,
 			tpt_tasks_first_due_on: due.first,
+			tpt_tasks_label_colors: colorsForLabels(labels, labelColors),
 			tpt_tasks_labels: labels,
 			tpt_tasks_last_deadline_on: deadline.last,
 			tpt_tasks_last_due_on: due.last,

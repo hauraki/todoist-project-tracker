@@ -1,6 +1,6 @@
 import { requestUrl } from 'obsidian';
 import { isPage } from './page';
-import type { TodoistProject, TodoistTask } from './types';
+import type { TodoistLabel, TodoistProject, TodoistTask } from './types';
 
 const BASE_URL = 'https://api.todoist.com/api/v1';
 const PAGE_SIZE = 200;
@@ -23,6 +23,11 @@ export class TodoistClient {
 	/** All active tasks across all projects (including the inbox). */
 	getActiveTasks(): Promise<TodoistTask[]> {
 		return this.getAll<TodoistTask>('/tasks');
+	}
+
+	/** Personal labels with their colors. Shared labels are not included. */
+	getLabels(): Promise<TodoistLabel[]> {
+		return this.getAll<TodoistLabel>('/labels');
 	}
 
 	/** Follows `next_cursor` until all pages have been collected. */
