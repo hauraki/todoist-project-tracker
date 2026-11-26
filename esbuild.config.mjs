@@ -42,22 +42,25 @@ const context = await esbuild.context({
 	minify: prod,
 });
 
-/** styles.css is not part of the JS graph, so copy it next to main.js ourselves. */
-const copyStyles = () => copyFileSync('styles.css', 'dist/styles.css');
+/** These files are not part of the JS graph, so copy them next to main.js ourselves. */
+const STATIC_FILES = ['styles.css', 'manifest.json'];
+const copyStatic = (file) => copyFileSync(file, `dist/${file}`);
 
 if (prod) {
 	await context.rebuild();
-	copyStyles();
+	STATIC_FILES.forEach(copyStatic);
 	process.exit(0);
 } else {
-	copyStyles();
-	watch('styles.css', () => {
-		try {
-			copyStyles();
-			console.log('[watch] copied styles.css');
-		} catch (e) {
-			console.error('[watch] failed to copy styles.css', e);
-		}
-	});
+	for (const file of STATIC_FILES) {
+		copyStatic(file);
+		watch(file, () => {
+			try {
+				copyStatic(file);
+				console.log(`[watch] copied ${file}`);
+			} catch (e) {
+				console.error(`[watch] failed to copy ${file}`, e);
+			}
+		});
+	}
 	await context.watch();
 }
