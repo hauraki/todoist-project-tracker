@@ -90,7 +90,7 @@ const ACTIVE_PROJECTS: DemoProject[] = [
 		],
 	},
 	{
-		name: 'Home & Garden 🏡',
+		name: '🏡 Home',
 		color: 'lime_green',
 		tasks: [
 			{ content: 'Order tulip bulbs', labels: ['errand'], dueIn: -3, priority: 2 },
