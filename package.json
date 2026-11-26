@@ -1,7 +1,7 @@
 {
 	"name": "todoist-project-tracker",
 	"version": "0.1.0",
-	"description": "Imports your Todoist projects into Obsidian to track their status.",
+	"description": "Imports your Todoist projects into your vault to track their status.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {

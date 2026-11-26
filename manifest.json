@@ -3,7 +3,7 @@
 	"name": "Todoist Project Tracker",
 	"version": "0.1.0",
 	"minAppVersion": "1.11.5",
-	"description": "Imports your Todoist projects into Obsidian to track their status.",
+	"description": "Imports your Todoist projects into your vault to track their status.",
 	"author": "Norbert Stein",
 	"authorUrl": "https://github.com/hauraki",
 	"isDesktopOnly": false
