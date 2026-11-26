@@ -2,6 +2,8 @@
 
 An Obsidian plugin that imports your Todoist projects into your vault so you can track them alongside your notes.
 
+![Demo: Todoist projects imported into an Obsidian base; completed tasks, a renamed project and an archived project show up after the next import](https://raw.githubusercontent.com/hauraki/todoist-project-tracker/master/docs/demo.gif)
+
 The plugin is **read-only** towards Todoist: it only ever reads data via the Todoist API and never writes anything back.
 
 ## Network use and privacy
