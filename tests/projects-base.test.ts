@@ -6,10 +6,12 @@ function lines(base: string): string[] {
 	return base.split('\n');
 }
 
-test('buildProjectsBase filters on the exact projects folder and active status', () => {
+test('buildProjectsBase filters on the exact projects folder, and each view on its status', () => {
 	const base = lines(buildProjectsBase('Traktion/Projects', '1.2.3'));
 	assert.ok(base.includes(`    - 'file.folder == "Traktion/Projects"'`));
-	assert.ok(base.includes('    - tpt_project_status == "active"'));
+	assert.ok(base.includes('        - tpt_project_status == "active"'));
+	assert.ok(base.includes('        - tpt_project_status == "archived"'));
+	assert.ok(!base.includes('    - tpt_project_status == "active"'));
 	assert.match(base[0] ?? '', /^# Created by Todoist Project Tracker 1\.2\.3\./);
 });
 
@@ -24,10 +26,11 @@ test('buildProjectsBase keeps the html quotes escaped inside the formulas', () =
 	assert.ok(base.includes('tpt_tasks_label_colors[index]'));
 });
 
-test('buildProjectsBase has one Active view with every formula it uses defined', () => {
+test('buildProjectsBase has Active and Archived views with every formula they use defined', () => {
 	const base = buildProjectsBase('TPT', '1.0.0');
-	assert.equal(base.match(/^ {2}- type: table$/gm)?.length, 1);
+	assert.equal(base.match(/^ {2}- type: table$/gm)?.length, 2);
 	assert.ok(base.includes('    name: Active'));
+	assert.ok(base.includes('    name: Archived'));
 	const defined = new Set([...base.matchAll(/^ {2}(\w+): /gm)].map((m) => m[1]));
 	for (const [, name] of base.matchAll(/formula\.(\w+)/g)) {
 		assert.ok(defined.has(name), `formula.${name} is used but not defined`);

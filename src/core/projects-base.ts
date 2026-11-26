@@ -1,6 +1,7 @@
 /**
- * Builds a sample `.base` file with an "Active" view of the project files: Todoist icon, rank,
- * name, parent, task count, next date (relative) and colored labels.
+ * Builds a sample `.base` file over the project files with two views: "Active" (Todoist icon,
+ * rank, name, parent, task count, next date (relative) and colored labels) and "Archived"
+ * (Todoist icon and name).
  *
  * Only the projects folder varies per user. It is embedded as a JSON string literal inside a
  * single-quoted YAML scalar, so quotes, `#` or `:` in folder names cannot break either layer.
@@ -11,7 +12,6 @@ export function buildProjectsBase(folderPath: string, pluginVersion: string): st
 filters:
   and:
     - ${folderFilter}
-    - tpt_project_status == "active"
 formulas:
   icon: link(tpt_project_link, html("<span class=\\"tpt-hash tpt-color-" + tpt_project_color + "\\">#</span>"))
   first_due_days: ((number(tpt_tasks_first_due_on.date()) - number(today())) / 86400000).round()
@@ -37,6 +37,9 @@ properties:
 views:
   - type: table
     name: Active
+    filters:
+      and:
+        - tpt_project_status == "active"
     order:
       - formula.icon
       - tpt_project_rank
@@ -56,6 +59,20 @@ views:
       note.tpt_tasks_count: 55
       formula.first_date_relative: 45
       formula.colored_labels_list: 244
+  - type: table
+    name: Archived
+    filters:
+      and:
+        - tpt_project_status == "archived"
+    order:
+      - formula.icon
+      - file.name
+    sort:
+      - property: file.name
+        direction: ASC
+    columnSize:
+      formula.icon: 45
+      file.name: 188
 `;
 }
 
