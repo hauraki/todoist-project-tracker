@@ -1,6 +1,6 @@
 {
 	"name": "todoist-project-tracker",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Imports your Todoist projects into your vault to track their status.",
 	"main": "main.js",
 	"type": "module",

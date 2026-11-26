@@ -1,7 +1,7 @@
 {
 	"id": "todoist-project-tracker",
 	"name": "Todoist Project Tracker",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"minAppVersion": "1.11.5",
 	"description": "Imports your Todoist projects into your vault to track their status.",
 	"author": "Norbert Stein",
